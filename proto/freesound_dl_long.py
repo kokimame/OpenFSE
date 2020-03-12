@@ -1,3 +1,4 @@
+import os
 
 def download_sounds_freesound(queryText="", tag=None, duration=None, API_Key="", outputDir="", topNResults=5,
                               featureExt='.json'):

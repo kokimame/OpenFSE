@@ -5,13 +5,14 @@ import librosa
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from tqdm import tqdm
 
 import warnings
 # Suppress soundfile warning on loading MP3
 warnings.simplefilter("ignore")
 
-DLTOP = f"{os.environ['HOME']}/Project/Master_Files/audio"
-SPECTOP = f"{os.environ['HOME']}/Project/Master_Files/spec"
+DLTOP = f"{os.environ['HOME']}/Project/Master_Files/audio_v2"
+SPECTOP = f"{os.environ['HOME']}/Project/Master_Files/spec_casia_v2"
 
 # Check if the directories exist
 for dir in [DLTOP, SPECTOP]:
@@ -50,15 +51,19 @@ def spec_to_chunk(spec):
         output_chunks.append(padded_chunk)
     return output_chunks
 
-def save_chucks(chunks, origina_path):
-    audio_id = Path(origina_path).stem
+def save_chucks(chunks, original_path):
+    audio_id = Path(original_path).stem
+
+    if not os.path.exists(f"{SPECTOP}/{audio_id}/"):
+        os.makedirs(f"{SPECTOP}/{audio_id}/")
+
     for i, chunk in enumerate(chunks):
-        chunk_path = f"{SPECTOP}/{audio_id}_{i}"
+        chunk_path = f"{SPECTOP}/{audio_id}/" + "%03d" % (i + 1)
         np.save(chunk_path, chunk)
 
 audio_paths = glob.glob(f"{DLTOP}/*.mp3")
 
-for path in audio_paths:
+for path in tqdm(audio_paths):
     spec = compute_spectrogram(path)
     chunks = spec_to_chunk(spec)
     save_chucks(chunks, path)
