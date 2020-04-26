@@ -4,7 +4,7 @@ import torch
 from scipy import interpolate
 import os
 
-MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files/da-tacos'
+MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files'
 
 def import_dataset_from_pt(filename, chunks=1, model_type=0):
     """
@@ -117,27 +117,12 @@ def average_precision(ypred, k=None, eps=1e-10, reduce_mean=True, dataset=0):
     :param dataset: which dataset to evaluate (required for loading the ground truth)
     :return: mean average precision value
     """
-    if dataset == 0:  # loading the ground truth for our validation set
-        ytrue = f'{MYPREFIX}/data/ytrue_validation.pt'
-        ytrue = torch.load(ytrue).float()
-    elif dataset == 1:  # loading the ground truth for Da-TACOS
-        ytrue = f'{MYPREFIX}/data/ytrue_benchmark.pt'
-        ytrue = torch.load(ytrue).float()
-    elif dataset == 2:  # loading the ground truth for scratch
-        ytrue = f'{MYPREFIX}/data/ytrue_benchmark_scratch.pt'
-        ytrue = torch.load(ytrue).float()
-    else:  # loading the ground truth for YoutubeCovers
-        ytrue = f'{MYPREFIX}/data/ytrue_ytc.pt'
-        ytrue = torch.load(ytrue).float()
-
-        i1 = pd.read_csv('data/ytc_test.txt', header=None, index_col=None).values.flatten().tolist()
-        i2 = pd.read_csv('data/ytc_ref.txt', header=None, index_col=None).values.flatten().tolist()
-        i1 = [item - 1 for item in i1]
-        i2 = [item - 1 for item in i2]
-        ytrue = ytrue[i1][:, i2]
-        ypred = ypred[i1][:, i2]
-
-    ytrue = ytrue[:1000]
+    # if dataset == 0:  # loading the ground truth for our validation set
+    #     ytrue = f'{MYPREFIX}/ytrue_validation.pt'
+    #     ytrue = torch.load(ytrue).float()
+    # elif dataset == 1:  # loading the ground truth for Da-TACOS
+    ytrue = f'{MYPREFIX}/ytrue_benchmark_ta.pt'
+    ytrue = torch.load(ytrue).float()
 
     if k is None:
         k = ypred.size(1)

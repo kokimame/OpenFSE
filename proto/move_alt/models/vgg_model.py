@@ -33,6 +33,8 @@ class VGGModel(nn.Module):
         self.conv5 = nn.Conv2d(in_channels=16,
                                out_channels=16,
                                kernel_size=(3, 3))
+        self.lin1 = nn.Linear(in_features=64, out_features=emb_size, bias=True)
+
         self.fin_emb_size = emb_size
         self.double()
 
@@ -43,6 +45,7 @@ class VGGModel(nn.Module):
         x = self.prelu4(self.maxpool(self.conv4(x)))
         x = self.prelu5(self.maxpool(self.conv5(x)))
 
-        x = torch.flatten(x)
-        x = x.unsqueeze(0)
+        x = torch.flatten(x, start_dim=1)
+        x = self.lin1(x)
+        x = torch.sigmoid(x)
         return x

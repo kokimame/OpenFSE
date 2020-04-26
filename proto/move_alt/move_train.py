@@ -36,16 +36,12 @@ def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=
 
     for batch_idx, batch in enumerate(train_loader):  # training loop
         items, labels = batch
-
         if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
             items = items.cuda()
-
         res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
-
-
         # calculating the loss value of the mini-batch
-        loss = triplet_loss_mining(res_1, move_model, labels, margin=margin, mining_strategy=mining_strategy,
-                                   norm_dist=norm_dist)
+        loss = triplet_loss_mining(res_1, move_model, labels,
+                                   margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
@@ -87,8 +83,8 @@ def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_
             res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss = triplet_loss_mining(res_1, move_model, labels, margin=margin, mining_strategy=mining_strategy,
-                                       norm_dist=norm_dist)
+            loss = triplet_loss_mining(res_1, move_model, labels,
+                                       margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
             loss_log.append(loss.cpu().item())
@@ -97,31 +93,9 @@ def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_
 
     return val_loss
 
-
-def train(save_name,
-          train_path,
-          chunks,
-          val_path,
-          save_model,
-          save_summary,
-          seed,
-          num_of_epochs,
-          model_type,
-          emb_size,
-          sum_method,
-          final_activation,
-          lr,
-          lrsch,
-          lrsch_factor,
-          momentum,
-          patch_len,
-          num_of_labels,
-          ytc,
-          data_aug,
-          norm_dist,
-          mining_strategy,
-          margin
-          ):
+def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_of_epochs,
+          model_type,emb_size,sum_method,final_activation,lr,lrsch,lrsch_factor,momentum,
+          patch_len,num_of_labels,ytc,data_aug,norm_dist,mining_strategy,margin):
     """
     Main training function of MOVE. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
@@ -173,7 +147,6 @@ def train(save_name,
         torch.backends.cudnn.benchmark = False
         torch.cuda.manual_seed(seed)
 
-
     # initiating the optimizer
     optimizer = SGD(move_model.parameters(),
                     lr=lr,
@@ -189,8 +162,7 @@ def train(save_name,
         train_path = '{}_1.pt'.format(train_path)
     else:
         train_path = train_path
-    train_data, train_labels = import_dataset_from_pt('{}'.format(train_path),
-                                                      chunks=chunks, model_type=model_type)
+    train_data, train_labels = import_dataset_from_pt('{}'.format(train_path), chunks=chunks, model_type=model_type)
     print('Train data has been loaded!')
 
     val_data, val_labels = import_dataset_from_pt('{}'.format(val_path), chunks=1, model_type=model_type)

@@ -7,6 +7,7 @@ from utils.move_utils import cs_augment
 
 class MOVEDatasetFixed(Dataset):
     """
+    = Original
     MOVEDataset object returns 4 songs for a given label.
     Given features are pre-processed to have a same particular shape.
     """
@@ -14,10 +15,10 @@ class MOVEDatasetFixed(Dataset):
     def __init__(self, data, labels, h=128, w=128, data_aug=1, ytc=0):
         """
         Initialization function for the MOVEDataset object
-        :param data: pcp features
+        :param data: features
         :param labels: labels of features (should be in the same order as features)
-        :param h: height of pcp features (number of bins, e.g. 12 or 23)
-        :param w: width of pcp features (number of frames in the temporal dimension)
+        :param h: height of features (number of bins, e.g. 12 or 23)
+        :param w: width of features (number of frames in the temporal dimension)
         :param data_aug: whether to apply data augmentation to each song (1 or 0)=
         :param ytc: whether to train for benchmarking on YoutubeCovers dataset (1 or 0)
         """
@@ -34,17 +35,10 @@ class MOVEDatasetFixed(Dataset):
         # dictionary to store which indexes belong to which label
         self.label_to_indices = {label: np.where(self.labels == label)[0] for label in self.labels_set}
 
-        # labels to exclude for benchmarking on YoutubeCovers dataset
-        # ytc_labels = ['W_6731', 'W_88', 'W_5327', 'W_21166', 'W_112698', 'W_726', 'W_4273', 'W_39452', 'W_34283',
-        #               'W_6430', 'W_134194', 'W_4517', 'W_14557', 'W_9036', 'W_16818', 'W_6414', 'W_6315']
-
         self.clique_list = []  # list to store all cliques
 
         # adding some cliques multiple times depending on their size
         for label in self.label_to_indices.keys():
-            # if ytc == 1:
-            #     if label in ytc_labels:
-            #         continue
             if self.label_to_indices[label].size < 2:
                 pass
             elif self.label_to_indices[label].size < 6:
@@ -62,7 +56,6 @@ class MOVEDatasetFixed(Dataset):
         :param index: index of the clique picked by the dataloader
         :return: 4 songs and their labels from the picked clique
         """
-
         label = self.clique_list[index]  # getting the clique chosen by the dataloader
 
         # selecting 4 songs from the given clique

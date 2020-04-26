@@ -22,7 +22,7 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
     for l in labels:
         if l not in aux:
             aux[l] = len(aux)
-        i_labels += [aux[l]] * 1
+        i_labels += [aux[l]] * 4
 
     i_labels = torch.Tensor(i_labels).view(-1, 1)
 
@@ -31,6 +31,7 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
         i_labels = i_labels.cuda()
         mask_diag = mask_diag.cuda()
     temp_mask = (pairwise_distance_matrix(i_labels) < 0.5).long()
+
     mask_pos = mask_diag * temp_mask
     mask_neg = mask_diag * (1 - mask_pos)
 
@@ -45,6 +46,7 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
     else:  # hard mining
         dist_g, dist_i = triplet_mining_hard(dist_all, mask_pos, mask_neg)
 
+    # Loss = max(Distance_a_p - Distance_a_n + Margin, 0)
     loss = F.relu(dist_g + (margin - dist_i))  # calculating triplet loss
 
     return loss.mean()

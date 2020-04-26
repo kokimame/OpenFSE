@@ -1,1 +1,4 @@
 python3 move_main.py --train_path /home/kokimame/Project/Master_Files/da-tacos/data/benchmark_vgg --val /home/kokimame/Project/Master_Files/da-tacos/data/benchmark_vgg_1.pt --chunks 1
+
+
+python3 move_main.py --train_path /home/kokimame/Project/Master_Files/benchmark_ta --val /home/kokimame/Project/Master_Files/benchmark_ta_1.pt --chunks 1

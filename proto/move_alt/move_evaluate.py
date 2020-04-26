@@ -11,7 +11,7 @@ from utils.move_utils import pairwise_distance_matrix
 from utils.move_utils import import_dataset_from_pt
 from tqdm import tqdm
 
-MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files/da-tacos'
+MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files'
 
 def test(move_model, test_loader, norm_dist=1):
     """
@@ -74,13 +74,13 @@ def evaluate(save_name,
     # val_subset_crema is the name of our validation set
     if dataset_name == '':
         if dataset == 0:
-            dataset_name = f'{MYPREFIX}/data/val_subset_crema.pt'
+            dataset_name = f'{MYPREFIX}/val_subset_crema.pt'
         elif dataset == 1:
-            dataset_name = f'{MYPREFIX}/data/benchmark_crema.pt'
+            dataset_name = f'{MYPREFIX}/benchmark_crema.pt'
         elif dataset == 2:
-            dataset_name = f'{MYPREFIX}/data/benchmark_scratch.pt'
+            dataset_name = f'{MYPREFIX}/benchmark_scratch.pt'
         else:
-            dataset_name = f'{MYPREFIX}/data/ytc_crema.h5'
+            dataset_name = f'{MYPREFIX}/ytc_crema.h5'
     else:
         dataset_name = 'data/{}'.format(dataset_name)
 

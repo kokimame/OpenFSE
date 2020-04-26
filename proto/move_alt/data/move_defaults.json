@@ -1,6 +1,6 @@
 {
   "patch_len": 128,
-  "num_of_labels": 1,
+  "num_of_labels": 16,
   "emb_size": 256,
   "model_type": 2,
   "data_aug": 0,
