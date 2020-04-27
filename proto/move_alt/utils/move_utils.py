@@ -117,12 +117,13 @@ def average_precision(ypred, k=None, eps=1e-10, reduce_mean=True, dataset=0):
     :param dataset: which dataset to evaluate (required for loading the ground truth)
     :return: mean average precision value
     """
-    # if dataset == 0:  # loading the ground truth for our validation set
-    #     ytrue = f'{MYPREFIX}/ytrue_validation.pt'
-    #     ytrue = torch.load(ytrue).float()
+    if dataset == 0:  # loading the ground truth for our validation set
+        ytrue = f'{MYPREFIX}/ytrue_val_ta.pt'
+        ytrue = torch.load(ytrue).float()
     # elif dataset == 1:  # loading the ground truth for Da-TACOS
-    ytrue = f'{MYPREFIX}/ytrue_benchmark_ta.pt'
-    ytrue = torch.load(ytrue).float()
+    else:
+        ytrue = f'{MYPREFIX}/ytrue_train_ta.pt'
+        ytrue = torch.load(ytrue).float()
 
     if k is None:
         k = ypred.size(1)

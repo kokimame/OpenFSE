@@ -185,11 +185,9 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
                                  data_aug=data_aug, ytc=ytc)
     train_loader = DataLoader(train_set, batch_size=num_of_labels, shuffle=True,
                               collate_fn=triplet_mining_collate, drop_last=True)
-
     val_set = MOVEDatasetFixed(val_data, val_labels, h=h, w=patch_len, data_aug=0)
     val_loader = DataLoader(val_set, batch_size=num_of_labels, shuffle=True,
                             collate_fn=triplet_mining_collate, drop_last=True)
-
     val_map_set = MOVEDatasetFull(val_data, val_labels)
     val_map_loader = DataLoader(val_map_set, batch_size=1, shuffle=False)
 

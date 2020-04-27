@@ -74,13 +74,7 @@ def evaluate(save_name,
     # val_subset_crema is the name of our validation set
     if dataset_name == '':
         if dataset == 0:
-            dataset_name = f'{MYPREFIX}/val_subset_crema.pt'
-        elif dataset == 1:
-            dataset_name = f'{MYPREFIX}/benchmark_crema.pt'
-        elif dataset == 2:
-            dataset_name = f'{MYPREFIX}/benchmark_scratch.pt'
-        else:
-            dataset_name = f'{MYPREFIX}/ytc_crema.h5'
+            dataset_name = f'{MYPREFIX}/ta_val.pt'
     else:
         dataset_name = 'data/{}'.format(dataset_name)
 
