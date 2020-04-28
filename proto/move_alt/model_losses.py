@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from utils.move_utils import pairwise_distance_matrix
+from utils.utils import pairwise_distance_matrix
 
 
 def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, norm_dist=1):

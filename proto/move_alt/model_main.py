@@ -2,8 +2,8 @@ import argparse
 import json
 from datetime import datetime
 
-from move_evaluate import evaluate
-from move_train import train
+from model_evaluate import evaluate
+from model_train import train
 
 if __name__:
     with open('data/move_defaults.json') as f:

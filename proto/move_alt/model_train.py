@@ -8,16 +8,16 @@ from torch.optim import SGD
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 
-from dataset.move_dataset_fixed_size import MOVEDatasetFixed
-from dataset.move_dataset_full_size import MOVEDatasetFull
+from dataset.dataset_fixed_size import MOVEDatasetFixed
+from dataset.dataset_full_size import MOVEDatasetFull
 from models.move_model import MOVEModel
 from models.vgg_model import VGGModel
 from models.move_model_nt import MOVEModelNT
-from move_evaluate import test
-from move_losses import triplet_loss_mining
-from utils.move_utils import average_precision
-from utils.move_utils import import_dataset_from_pt
-from utils.move_utils import triplet_mining_collate
+from model_evaluate import test
+from model_losses import triplet_loss_mining
+from utils.utils import average_precision
+from utils.utils import import_dataset_from_pt
+from utils.utils import triplet_mining_collate
 
 
 def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):

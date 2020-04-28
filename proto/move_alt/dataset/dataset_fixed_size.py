@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from utils.move_utils import cs_augment
+from utils.utils import cs_augment
 
 
 class MOVEDatasetFixed(Dataset):

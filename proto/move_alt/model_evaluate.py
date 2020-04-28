@@ -2,13 +2,13 @@ import os
 import torch
 from torch.utils.data import DataLoader
 
-from dataset.move_dataset_full_size import MOVEDatasetFull
+from dataset.dataset_full_size import MOVEDatasetFull
 from models.move_model import MOVEModel
 from models.vgg_model import VGGModel
 from models.move_model_nt import MOVEModelNT
-from utils.move_utils import average_precision
-from utils.move_utils import pairwise_distance_matrix
-from utils.move_utils import import_dataset_from_pt
+from utils.utils import average_precision
+from utils.utils import pairwise_distance_matrix
+from utils.utils import import_dataset_from_pt
 from tqdm import tqdm
 
 MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files'
