@@ -132,23 +132,23 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
 
     # initializing the model
     if model_type == 0:
-        move_model = MOVEModel(emb_size=emb_size, sum_method=sum_method, final_activation=final_activation)
+        model = MOVEModel(emb_size=emb_size, sum_method=sum_method, final_activation=final_activation)
     elif model_type == 1:
-        move_model = MOVEModelNT(emb_size=emb_size, sum_method=sum_method, final_activation=final_activation)
+        model = MOVEModelNT(emb_size=emb_size, sum_method=sum_method, final_activation=final_activation)
     if model_type == 2:
-        move_model = VGGModel(emb_size=256)
+        model = VGGModel(emb_size=256)
     else:
         raise Exception('Invalid number for the model parameter.')
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
-        move_model.cuda()
+        model.cuda()
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.cuda.manual_seed(seed)
 
     # initiating the optimizer
-    optimizer = SGD(move_model.parameters(),
+    optimizer = SGD(model.parameters(),
                     lr=lr,
                     momentum=momentum)
 
@@ -205,7 +205,7 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
 
     # calculating the number of parameters of the model
     tmp = 0
-    for p in move_model.parameters():
+    for p in model.parameters():
         tmp += np.prod(p.size())
     print('Num of parameters = {}'.format(int(tmp)))
 
@@ -219,7 +219,7 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
         start = time.monotonic()  # start time for the training loop
-        train_loss = train_triplet_mining(move_model=move_model,
+        train_loss = train_triplet_mining(move_model=model,
                                           optimizer=optimizer,
                                           train_loader=train_loader,
                                           margin=margin,
@@ -228,7 +228,7 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
         print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the validation loop
-        val_loss = validate_triplet_mining(move_model=move_model,
+        val_loss = validate_triplet_mining(move_model=model,
                                            val_loader=val_loader,
                                            margin=margin,
                                            norm_dist=norm_dist,
@@ -239,7 +239,7 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
         start = time.monotonic()  # start time for the mean average precision calculation
 
         # calculating the pairwise distances on validation set
-        dist_map_matrix = test(move_model=move_model,
+        dist_map_matrix = test(move_model=model,
                                test_loader=val_map_loader).cpu()
 
         # calculation performance metrics
@@ -259,7 +259,7 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
         if save_model == 1:
             if not os.path.exists('saved_models/'):
                 os.mkdir('saved_models/')
-            torch.save(move_model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
+            torch.save(model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
 
         # printing the losses
         print('training_loss: {}'.format(train_loss))
@@ -328,4 +328,4 @@ def train(save_name,train_path,chunks,val_path,save_model,save_summary,seed,num_
     if save_model == 1:
         if not os.path.exists('saved_models/'):
             os.mkdir('saved_models/')
-        torch.save(move_model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
+        torch.save(model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
