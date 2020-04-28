@@ -4,12 +4,14 @@ import os
 import glob
 from tqdm import tqdm
 
-DATASET_SIZE = 5000
+DATASET_SIZE = 9000
 TRAIN_SPLIT = 0.8
+ROOTDIR = f'{os.environ["HOME"]}/Project/Master_Files'
+DATADIR = f'{ROOTDIR}/spec_tagged'
+DATASET_NAME = 'tag'
 last_train_index = int(DATASET_SIZE * TRAIN_SPLIT)
-root_dir = f'{os.environ["HOME"]}/Project/Master_Files'
-data_dir = f'{root_dir}/spec_casia_v2'
-files = glob.glob(os.path.join(data_dir, '*', '*.npy'))
+
+files = glob.glob(os.path.join(DATADIR, '*', '*.npy'))
 # Create data file
 for desc, data_range in [('train', range(last_train_index)), ('val', range(last_train_index, DATASET_SIZE))]:
     data, labels = [], []
@@ -23,7 +25,7 @@ for desc, data_range in [('train', range(last_train_index)), ('val', range(last_
 
     dataset_dict = {'data': data, 'labels': labels}
     postfix = '_1' if desc == 'train' else ''
-    torch.save(dataset_dict, os.path.join(root_dir, f'ta_{desc}{postfix}.pt'))
+    torch.save(dataset_dict, os.path.join(ROOTDIR, f'{DATASET_NAME}_{desc}{postfix}.pt'))
 
     # Create annotation file
     ytrue = []
@@ -37,4 +39,4 @@ for desc, data_range in [('train', range(last_train_index)), ('val', range(last_
                 sub_ytrue.append(0)
         ytrue.append(sub_ytrue)
     ytrue = torch.Tensor(ytrue)
-    torch.save(ytrue, os.path.join(root_dir, f'ytrue_{desc}_ta.pt'))
+    torch.save(ytrue, os.path.join(ROOTDIR, f'ytrue_{desc}_{DATASET_NAME}.pt'))

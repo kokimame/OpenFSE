@@ -1,7 +1,6 @@
 import os
 import glob, json
 import freesound
-
 client = freesound.FreesoundClient()
 client.set_token("3uYSYQldiW7rON8ksZNTrUPNrs7SV8MRGUDYCDRd", "token")
 IDLIMIT = 0
@@ -31,9 +30,12 @@ for id, label, conf, duration in annons:
 
 
 total_download = 0
-for id_chunk in chunks(list(label_lookup.keys()), 50):
+start_chunk = 126
+for ith, id_chunk in enumerate(chunks(list(label_lookup.keys()), 50)):
+
+    if ith < start_chunk: continue
     print(
-        '- + - + - + - + - + - + -\nFreesound API CALL\n'
+        f'- + - + - + - + - + - + -\nFreesound API CALL ({ith}-th chunk)\n'
     )
     results_pager = client.text_search(
         filter=f'id:({" OR ".join(id_chunk)})',
@@ -46,8 +48,14 @@ for id_chunk in chunks(list(label_lookup.keys()), 50):
             dir = os.path.join(DOWNLOAD_DIR, label_lookup[str(sound.id)])
             if not os.path.exists(dir):
                 os.makedirs(dir)
+
             sound.retrieve_preview(dir, f"{str(sound.id)}.mp3")
             total_download += 1
-            print(f'Total downloads ... {i:7d}\t|\t{sound.id} - {sound.name}')
+            print(f'Total downloads ... {i:4d}\t|\t{sound.id} - {sound.name}')
         except KeyError as e:
             print(f'Unexpected sound caught from freesound id:{sound.id}')
+        except Exception as e:
+            if '404 Not Found' in str(e):
+                continue
+            else:
+                raise e

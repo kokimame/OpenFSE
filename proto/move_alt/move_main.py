@@ -1,5 +1,6 @@
 import argparse
 import json
+from datetime import datetime
 
 from move_evaluate import evaluate
 from move_train import train
@@ -151,20 +152,12 @@ if __name__:
                         default='',
                         help='Specifying a dataset name for evaluation. '
                              'The dataset must be located in the data folder')
-
     args = parser.parse_args()
-
+    save_name = '_'.join([args.train_path.split('/')[-1]] + str(datetime.now()).split())
     lr_arg = '{}'.format(args.learning_rate).replace('.', '-')
     margin_arg = '{}'.format(args.margin).replace('.', '-')
 
-    save_name = 'move'
 
-    for key in defaults.keys():
-        if key == 'abbr':
-            pass
-        else:
-            if defaults[key] != getattr(args, key):
-                save_name = '{}_{}_{}'.format(save_name, defaults['abbr'][key], getattr(args, key))
 
     if args.run_type == 'train':
         train(save_name=save_name,
