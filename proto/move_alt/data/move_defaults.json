@@ -10,18 +10,15 @@
   "num_of_epochs": 1200,
   "learning_rate": 1.0,
   "dataset_root": "/home/kokimame/Project/Master_Files",
-
   "run_type": "train",
-  "sum_method": 4,
-  "final_activation": 3,
+
   "random_seed": 42,
-  "lr_schedule": 2,
+  "lr_schedule": 0,
   "lrsch_factor": 0.2,
   "momentum": 0,
   "norm_dist": 1,
   "mining_strategy": 2,
   "margin": 1.0,
-  "ytc_labels": 0,
   "abbr": {
     "train_path": "tp",
     "chunks": "ch",
