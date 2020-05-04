@@ -1,13 +1,14 @@
 import os
 import glob
-import soundfile as sf
 import librosa
+import warnings
 import numpy as np
+import soundfile as sf
 import matplotlib.pyplot as plt
 from pathlib import Path
 from tqdm import tqdm
+from mutagen.mp3 import MP3
 
-import warnings
 # Suppress soundfile warning on loading MP3
 warnings.simplefilter('ignore')
 
@@ -63,7 +64,9 @@ def save_chucks(chunks, original_path):
 
 audio_paths = glob.glob(f'{DOWNLOAD_DIR}/*/*.mp3')
 
-for path in tqdm(audio_paths):
+for path in tqdm(audio_paths[:10000]):
+    if MP3(path).info.length <= 12:
+        continue
     spec = compute_spectrogram(path)
     chunks = spec_to_chunk(spec)
     save_chucks(chunks, path)

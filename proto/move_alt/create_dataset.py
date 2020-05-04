@@ -4,16 +4,16 @@ import os
 import glob
 from tqdm import tqdm
 
-DATASET_SIZE = 9000
 TRAIN_SPLIT = 0.8
 ROOTDIR = f'{os.environ["HOME"]}/Project/Master_Files'
 DATADIR = f'{ROOTDIR}/spec_tagged'
-DATASET_NAME = 'tag'
-last_train_index = int(DATASET_SIZE * TRAIN_SPLIT)
+DATASET_NAME = 'tag_dense'
 
 files = glob.glob(os.path.join(DATADIR, '*', '*.npy'))
+dataset_size = min(1000, len(files))
+last_train_index = int(dataset_size * TRAIN_SPLIT)
 # Create data file
-for desc, data_range in [('train', range(last_train_index)), ('val', range(last_train_index, DATASET_SIZE))]:
+for desc, data_range in [('train', range(last_train_index)), ('val', range(last_train_index, dataset_size))]:
     data, labels = [], []
     for i in tqdm(data_range, desc=f'Creating {desc} dataset'):
         spec = np.load(files[i])
