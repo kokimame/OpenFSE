@@ -4,9 +4,7 @@ import torch
 from scipy import interpolate
 import os
 
-MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files'
-
-def import_dataset_from_pt(filename, chunks=1, model_type=0):
+def import_dataset_from_pt(filename, chunks=1):
     """
     Loading a dataset stored in .pt format
     :param filename: name of the .pt file to load
@@ -28,9 +26,6 @@ def import_dataset_from_pt(filename, chunks=1, model_type=0):
         dataset_dict = torch.load('{}'.format(filename))
         data = dataset_dict['data']
         labels = dataset_dict['labels']
-
-    if model_type == 1:  # depending on the model type, reshape the pcp features
-        data = [data[i][:, :12] for i in range(len(data))]
 
     return data, labels
 
@@ -107,18 +102,17 @@ def triplet_mining_collate(batch):
     return torch.cat(items, 0), labels
 
 
-def average_precision(ypred, k=None, eps=1e-10, reduce_mean=True, dataset=0):
+def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
     """
     Calculating performance metrics
     :param ypred: square distance matrix
     :param k: k value for map@k
     :param eps: epsilon value for numerical stability
     :param reduce_mean: whether to take mean of the average precision values of each query
-    :param dataset: which dataset to evaluate (required for loading the ground truth)
     :return: mean average precision value
     """
-    ytrue = f'{MYPREFIX}/ytrue_val_tag.pt'
-    ytrue = torch.load(ytrue).float()
+    print(f'Compute average precision using {ytrue_path}')
+    ytrue = torch.load(ytrue_path).float()
     if k is None:
         k = ypred.size(1)
     _, spred = torch.topk(ypred, k, dim=1)

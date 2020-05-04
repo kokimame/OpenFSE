@@ -50,14 +50,7 @@ def test(move_model, test_loader, norm_dist=1):
     return dist_all
 
 
-def evaluate(save_name,
-             model_type,
-             emb_size,
-             sum_method,
-             final_activation,
-             dataset,
-             dataset_name
-             ):
+def evaluate(defaults, save_name, dataset_name):
     """
     Main evaluation function of MOVE. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
@@ -69,24 +62,14 @@ def evaluate(save_name,
     :param dataset: which dataset to evaluate the model on. (0) validation set, (1) da-tacos, (2) ytc
     :param dataset_name: name of the file to evaluate
     """
-
-    # indicating which dataset to use for evaluation
-    # val_subset_crema is the name of our validation set
-    if dataset_name == '':
-        if dataset == 0:
-            dataset_name = f'{MYPREFIX}/ta_val.pt'
-    else:
-        dataset_name = 'data/{}'.format(dataset_name)
-
+    model_type, emb_size, sum_method, final_activation, dataset, dataset_root = [
+        defaults[key.strip()] for key in """
+        model_type, emb_size, sum_method, final_activation, dataset, dataset_root
+        """.split(',')
+    ]
     print('Evaluating model {} on dataset {}.'.format(save_name, dataset_name))
 
-    # initializing the model
-    if model_type == 0:
-        move_model = MOVEModel(emb_size=emb_size, sum_method=sum_method, final_activation=final_activation)
-    elif model_type == 1:
-        move_model = MOVEModelNT(emb_size=emb_size, sum_method=sum_method, final_activation=final_activation)
-    elif model_type == 2:
-        move_model = VGGModel(emb_size=256)
+    move_model = VGGModel(emb_size=256)
 
     # loading a pre-trained model
     model_name = 'saved_models/model_{}.pt'.format(save_name)
@@ -115,6 +98,6 @@ def evaluate(save_name,
 
     # calculating the performance metrics
     average_precision(
+        os.path.join(dataset_root, f'ytrue_val_{dataset_name}.pt'),
         -1 * dist_map_matrix.clone() + torch.diag(torch.ones(len(test_data)) * float('-inf')),
-        dataset=dataset
     )
