@@ -40,14 +40,13 @@ def triplet_loss_mining(res_1, move_model, labels, margin=1, mining_strategy=2, 
         dist_all /= move_model.fin_emb_size
 
     if mining_strategy == 0:  # random mining
-        dist_g, dist_i = triplet_mining_random(dist_all, mask_pos, mask_neg)
+        dists_neg, dists_pos = triplet_mining_random(dist_all, mask_pos, mask_neg)
     elif mining_strategy == 1:  # semi-hard mining
-        dist_g, dist_i = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
+        dists_neg, dists_pos = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
     else:  # hard mining
-        dist_g, dist_i = triplet_mining_hard(dist_all, mask_pos, mask_neg)
-
+        dists_neg, dists_pos = triplet_mining_hard(dist_all, mask_pos, mask_neg)
     # Loss = max(Distance_a_p - Distance_a_n + Margin, 0)
-    loss = F.relu(dist_g + (margin - dist_i))  # calculating triplet loss
+    loss = F.relu(dists_neg + (margin - dists_pos))  # calculating triplet loss
 
     return loss.mean()
 

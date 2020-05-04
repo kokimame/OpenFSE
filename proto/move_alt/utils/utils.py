@@ -111,7 +111,7 @@ def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
     :param reduce_mean: whether to take mean of the average precision values of each query
     :return: mean average precision value
     """
-    print(f'Compute average precision using {ytrue_path}')
+    # print(f'Compute average precision using {ytrue_path}')
     ytrue = torch.load(ytrue_path).float()
     if k is None:
         k = ypred.size(1)

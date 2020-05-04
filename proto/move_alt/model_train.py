@@ -12,6 +12,7 @@ from dataset.dataset_fixed_size import MOVEDatasetFixed
 from dataset.dataset_full_size import MOVEDatasetFull
 from models.move_model import MOVEModel
 from models.vgg_model import VGGModel
+from models.vgg_model_v2 import VGGModelV2
 from models.move_model_nt import MOVEModelNT
 from model_evaluate import test
 from model_losses import triplet_loss_mining
@@ -134,7 +135,7 @@ def train(defaults, save_name, dataset_name):
     torch.manual_seed(d['random_seed'])
 
     # initializing the model
-    model = VGGModel(emb_size=256)
+    model = VGGModelV2(emb_size=256)
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
@@ -230,14 +231,14 @@ def train(defaults, save_name, dataset_name):
         start = time.monotonic()  # start time for the mean average precision calculation
 
         # calculating the pairwise distances on validation set
-        dist_map_matrix = test(move_model=model,
+        dist_map_matrix = test(model=model,
                                test_loader=val_map_loader).cpu()
 
         # calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
         val_map_score = average_precision(
-            os.path.join(d['data_root'], f'ytrue_val_{dataset_name}.pt'),
+            os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
             -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
         )
         print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))

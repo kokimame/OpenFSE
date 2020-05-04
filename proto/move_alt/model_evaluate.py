@@ -13,11 +13,11 @@ from tqdm import tqdm
 
 MYPREFIX = f'{os.environ["HOME"]}/Project/Master_Files'
 
-def test(move_model, test_loader, norm_dist=1):
+def test(model, test_loader, norm_dist=1):
     """
     Obtaining pairwise distances of all elements in the test set. For using full length songs,
     we pass them to the model one by one
-    :param move_model: model to be used for testing
+    :param model: model to be used for testing
     :param test_loader: dataloader for test
     :param norm_dist: whether to normalize distances by the embedding size
     :return: pairwise distance matrix of all elements in the test set
@@ -28,7 +28,7 @@ def test(move_model, test_loader, norm_dist=1):
         device = 'cpu'
 
     with torch.no_grad():  # deactivating gradient tracking for testing
-        move_model.eval()  # setting the model to evaluation mode
+        model.eval()  # setting the model to evaluation mode
 
         # tensor for storing all the embeddings obtained from the test set
         embed_all = torch.tensor([], device=device, dtype=torch.double)
@@ -38,14 +38,14 @@ def test(move_model, test_loader, norm_dist=1):
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 item = item.cuda()
 
-            res_1 = move_model(item)  # obtaining the embeddings of each song in the mini-batch
+            res_1 = model(item)  # obtaining the embeddings of each song in the mini-batch
 
             embed_all = torch.cat((embed_all, res_1))  # adding the embedding of the current song to the others
 
         dist_all = pairwise_distance_matrix(embed_all)  # calculating the condensed distance matrix
 
         if norm_dist == 1:  # normalizing the distances
-            dist_all /= move_model.fin_emb_size
+            dist_all /= model.fin_emb_size
 
     return dist_all
 
@@ -93,7 +93,7 @@ def evaluate(defaults, save_name, dataset_name):
     test_map_loader = DataLoader(test_map_set, batch_size=1, shuffle=False)
 
     # calculating the pairwise distances
-    dist_map_matrix = test(move_model=move_model,
+    dist_map_matrix = test(model=move_model,
                            test_loader=test_map_loader).cpu()
 
     # calculating the performance metrics
