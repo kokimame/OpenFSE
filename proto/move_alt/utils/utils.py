@@ -126,8 +126,10 @@ def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
     top1 = torch.sum(found[:, 0])
     top10 = torch.sum(found[:, :10])
 
+    # pair-wise prediction is always square
     pos = torch.arange(1, spred.size(1)+1).unsqueeze(0).to(ypred.device)
     prec = torch.cumsum(found, 1)/pos.float()
+    #TODO: 'found' seems to be binary and usable as the mask as it is
     mask = (found > 0).float()
     ap = torch.sum(prec*mask, 1)/(torch.sum(ytrue, 1)+eps)
     ap = ap[torch.sum(ytrue, 1) > 0]
