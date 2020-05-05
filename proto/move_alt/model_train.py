@@ -21,10 +21,10 @@ from utils.utils import import_dataset_from_pt
 from utils.utils import triplet_mining_collate
 from torch.utils.tensorboard import SummaryWriter
 
-def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):
+def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):
     """
     Training loop for one epoch
-    :param move_model: model to be trained
+    :param model: model to be trained
     :param optimizer: optimizer for training
     :param train_loader: dataloader for training
     :param margin: margin for the triplet loss
@@ -32,16 +32,16 @@ def train_triplet_mining(move_model, optimizer, train_loader, margin, norm_dist=
     :param mining_strategy: which online mining strategy to use
     :return: training loss of the current epoch
     """
-    move_model.train()  # setting the model to training mode
+    model.train()  # setting the model to training mode
     loss_log = []  # initialize the list for logging loss values of each mini-batch
 
     for batch_idx, batch in enumerate(train_loader):  # training loop
         items, labels = batch
         if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
             items = items.cuda()
-        res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
+        res_1 = model(items)  # obtaining the embeddings of each song in the mini-batch
         # calculating the loss value of the mini-batch
-        loss = triplet_loss_mining(res_1, move_model, labels,
+        loss = triplet_loss_mining(res_1, model, labels,
                                    margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
@@ -211,7 +211,7 @@ def train(defaults, save_name, dataset_name):
         last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
 
         start = time.monotonic()  # start time for the training loop
-        train_loss = train_triplet_mining(move_model=model,
+        train_loss = train_triplet_mining(model=model,
                                           optimizer=optimizer,
                                           train_loader=train_loader,
                                           margin=d['margin'],

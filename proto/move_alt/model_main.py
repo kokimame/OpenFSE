@@ -22,5 +22,6 @@ if __name__:
 
     if defaults['run_type'] == 'train':
         train(defaults, save_name, args.dataset_name)
+    # Use this later
     # else:
     #     evaluate(defaults, save_name, args.dataset_name)
