@@ -23,9 +23,6 @@ for path in paths:
     path_lookup[label] = paths
 path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1])))
 
-for k, v in list(path_lookup.items())[:USE_TOPK_LABELS]:
-    print(f'Label {k}: {len(v)}')
-exit()
 # Setup dataset
 train_data, train_labels = [], []
 val_data, val_labels = [], []
