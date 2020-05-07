@@ -1,1 +1,0 @@
-python3 model_main.py --train_path /home/kokimame/Project/Master_Files/tag_train --val_path /home/kokimame/Project/Master_Files/tag_val.pt
