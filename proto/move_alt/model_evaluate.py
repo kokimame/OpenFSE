@@ -84,11 +84,6 @@ def evaluate(defaults, save_name, dataset_name):
     # loading test data, initializing the dataset object and the data loader
     test_data, test_labels = import_dataset_from_pt(filename=dataset_name)
 
-    # FIXME
-    test_data, test_labels = test_data[:1000], test_labels[:1000]
-    # print(test_data[0].shape, test_labels[0])
-    # exit()
-
     test_map_set = MOVEDatasetFull(data=test_data, labels=test_labels)
     test_map_loader = DataLoader(test_map_set, batch_size=1, shuffle=False)
 
