@@ -7,10 +7,10 @@ from tqdm import tqdm
 TRAIN_SPLIT = 0.8
 ROOTDIR = f'{os.environ["HOME"]}/Project/Master_Files'
 DATADIR = f'{ROOTDIR}/spec_tagged_v2'
-DATASET_NAME = 'tag_dense'
+DATASET_NAME = 'tag_dense_small'
 
 files = glob.glob(os.path.join(DATADIR, '*', '*.npy'))
-dataset_size = min(10000, len(files))
+dataset_size = min(2000, len(files))
 last_train_index = int(dataset_size * TRAIN_SPLIT)
 # Create data file
 for run_type, data_range in [('train', range(last_train_index)), ('val', range(last_train_index, dataset_size))]:
@@ -26,7 +26,7 @@ for run_type, data_range in [('train', range(last_train_index)), ('val', range(l
     dataset_dict = {'data': data, 'labels': labels}
     postfix = '_1' if run_type == 'train' else ''
     print(f'Label Size: {len(set(labels))}')
-    # torch.save(dataset_dict, os.path.join(ROOTDIR, f'{DATASET_NAME}_{run_type}{postfix}.pt'))
+    torch.save(dataset_dict, os.path.join(ROOTDIR, f'{DATASET_NAME}_{run_type}{postfix}.pt'))
 
     # Create annotation file
     if run_type == 'val':
@@ -41,4 +41,4 @@ for run_type, data_range in [('train', range(last_train_index)), ('val', range(l
                     sub_ytrue.append(0)
             ytrue.append(sub_ytrue)
         ytrue = torch.Tensor(ytrue)
-        # torch.save(ytrue, os.path.join(ROOTDIR, f'ytrue_{run_type}_{DATASET_NAME}.pt'))
+        torch.save(ytrue, os.path.join(ROOTDIR, f'ytrue_{run_type}_{DATASET_NAME}.pt'))
