@@ -1,10 +1,13 @@
 import os
-import glob, json
+import glob
+import json
+import shutil
+import requests
 import freesound
 client = freesound.FreesoundClient()
 client.set_token("3uYSYQldiW7rON8ksZNTrUPNrs7SV8MRGUDYCDRd", "token")
 IDLIMIT = 0
-DATASET_NAME = 'audio_tagged'
+DATASET_NAME = 'audio_all'
 DOWNLOAD_DIR = f"{os.environ['HOME']}/Project/Master_Files/{DATASET_NAME}"
 if not os.path.exists(DOWNLOAD_DIR):
     os.makedirs(DOWNLOAD_DIR)
@@ -19,18 +22,12 @@ def chunks(l, n):
 
 label_lookup = {}
 for id, label, conf, duration in annons:
-    try:
-        _ = label_lookup[str(id)]
-    except:
-        label = label.replace('/', '_')
-        if 5 < duration <= 20:
-            label_lookup[str(id)] = label
-        if IDLIMIT and len(label_lookup.keys()) >= IDLIMIT:
-            break
-
+    labels = label_lookup.get(str(id), [])
+    labels.append(label.replace('/', '_'))
+    label_lookup[str(id)] = labels
 
 total_download = 0
-start_chunk = 126
+start_chunk = 831
 for ith, id_chunk in enumerate(chunks(list(label_lookup.keys()), 50)):
 
     if ith < start_chunk: continue
@@ -45,15 +42,21 @@ for ith, id_chunk in enumerate(chunks(list(label_lookup.keys()), 50)):
 
     for i, sound in enumerate(results_pager):
         try:
-            dir = os.path.join(DOWNLOAD_DIR, label_lookup[str(sound.id)])
-            if not os.path.exists(dir):
-                os.makedirs(dir)
-
-            sound.retrieve_preview(dir, f"{str(sound.id)}.mp3")
-            total_download += 1
-            print(f'Total downloads ... {i:4d}\t|\t{sound.id} - {sound.name}')
+            sound.retrieve_preview(DOWNLOAD_DIR, 'temp.mp3')
+            for label in label_lookup[str(sound.id)]:
+                dir = os.path.join(DOWNLOAD_DIR, label)
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+                shutil.copy(
+                    os.path.join(DOWNLOAD_DIR, 'temp.mp3'),
+                    os.path.join(dir, f'{str(sound.id)}.mp3')
+                )
+                total_download += 1
+            print(f'{i+1:4d}\t|\t{sound.id} - {sound.name}')
         except KeyError as e:
             print(f'Unexpected sound caught from freesound id:{sound.id}')
+        except requests.ConnectionError:
+            print(f'Connection Error: Skip a sound')
         except Exception as e:
             if '404 Not Found' in str(e):
                 continue
