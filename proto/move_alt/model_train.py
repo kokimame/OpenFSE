@@ -268,6 +268,8 @@ def train(defaults, save_name, dataset_name):
         summary['val_map_log'] = val_map_log
         writer.add_scalar('Loss/Train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
+        writer.add_scalar('Loss/Train_Avg', np.mean(train_loss_log), epoch)
+        writer.add_scalar('Loss/Val_Avg', np.mean(val_loss_log), epoch)
         writer.add_scalar('mAP/Val', val_map_score, epoch)
 
         # save summary, if needed, after each epoch
