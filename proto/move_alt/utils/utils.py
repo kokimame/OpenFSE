@@ -115,7 +115,9 @@ def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
     ytrue = torch.load(ytrue_path).float()
     if k is None:
         k = ypred.size(1)
+    # spred stores the ranks of similarity (closer first)
     _, spred = torch.topk(ypred, k, dim=1)
+    # 'found' reorders ytrue (binary matrix) according to spred
     found = torch.gather(ytrue, 1, spred)
 
     temp = torch.arange(k).float() * 1e-6

@@ -25,7 +25,7 @@ class VGGModelV2(nn.Module):
         self.prelu5 = nn.PReLU(init=0.01)
         self.prelu6 = nn.PReLU(init=0.01)
 
-        self.num_of_channels = 32
+        self.num_of_channels = 16
         self.conv1 = nn.Conv2d(in_channels=1,
                                out_channels=self.num_of_channels,
                                kernel_size=(3, 3),
