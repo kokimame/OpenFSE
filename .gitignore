@@ -1,8 +1,5 @@
 /paper
 /literature
-/proto/freesound-python
-/proto/ICASSP-2020-clustering
-/proto/ZSL_music_tagging
-/proto/DLSOUND
-/proto/facenet
 .idea
+/src/runs
+/src/saved_models
