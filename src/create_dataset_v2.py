@@ -41,6 +41,10 @@ for label, paths in list(path_lookup.items())[:USE_TOPK_LABELS]:
             val_data.append(tensor.unsqueeze(0))
             val_labels.append(label)
 
+# Temporarily reduce the validation dataset
+# so that my GPU wont't go out of memory
+val_data = val_data[:len(val_data)//2]
+val_labels = val_labels[:len(val_data)]
 
 # Create data file based on the datasets
 for run_type, data, labels in [('train', train_data, train_labels), ('val', val_data, val_labels)]:
