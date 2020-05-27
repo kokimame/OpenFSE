@@ -5,7 +5,7 @@ import json
 import csv
 import numpy as np
 import random
-from models.vgg_model import VGGModel
+from models.model_vgg import VGGModel
 
 SAVED_MODEL = 'saved_models/model_tag_train_2020-04-28_03:09:29.309522.pt'
 ONTROLOGY = '../json/ontology.json'

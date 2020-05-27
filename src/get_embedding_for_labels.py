@@ -6,8 +6,8 @@ import csv
 import numpy as np
 import random
 from pathlib import Path
-from models.vgg_model import VGGModel
-from models.vgg_model_v2 import VGGModelV2
+from models.model_vgg import VGGModel
+from models.model_vgg_v2 import VGGModelV2
 
 SAVED_MODEL = 'saved_models/model_tag_top10_2020-05-07_13:13:45.914868.pt'
 ONTROLOGY = '../json/ontology.json'

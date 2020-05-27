@@ -10,10 +10,10 @@ from torch.utils.data import DataLoader
 
 from dataset.dataset_fixed_size import MOVEDatasetFixed
 from dataset.dataset_full_size import MOVEDatasetFull
-from models.move_model import MOVEModel
-from models.vgg_model import VGGModel
-from models.vgg_model_v2 import VGGModelV2
-from models.move_model_nt import MOVEModelNT
+from models.model_move import MOVEModel
+from models.model_vgg import VGGModel
+from models.model_vgg_v2 import VGGModelV2
+from models.model_move_nt import MOVEModelNT
 from model_evaluate import test
 from model_losses import triplet_loss_mining
 from utils.utils import average_precision
@@ -61,10 +61,10 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mi
     return train_loss
 
 
-def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_strategy=2):
+def validate_triplet_mining(model_move, val_loader, margin, norm_dist=1, mining_strategy=2):
     """
     validation loop for one epoch
-    :param move_model: model to be used for validation
+    :param model_move: model to be used for validation
     :param val_loader: dataloader for validation
     :param margin: margin for the triplet loss
     :param norm_dist: whether to normalize distances by the embedding size
@@ -72,7 +72,7 @@ def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_
     :return: validation loss of the current epoch
     """
     with torch.no_grad():  # deactivating gradient tracking for testing
-        move_model.eval()  # setting the model to evaluation mode
+        model_move.eval()  # setting the model to evaluation mode
         loss_log = []  # initialize the list for logging loss values of each mini-batch
 
         for batch_idx, batch in enumerate(val_loader):  # training loop
@@ -81,10 +81,10 @@ def validate_triplet_mining(move_model, val_loader, margin, norm_dist=1, mining_
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 items = items.cuda()
 
-            res_1 = move_model(items)  # obtaining the embeddings of each song in the mini-batch
+            res_1 = model_move(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss = triplet_loss_mining(res_1, move_model, labels,
+            loss = triplet_loss_mining(res_1, model_move, labels,
                                        margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
@@ -220,7 +220,7 @@ def train(defaults, save_name, dataset_name):
         print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the validation loop
-        val_loss = validate_triplet_mining(move_model=model,
+        val_loss = validate_triplet_mining(model_move=model,
                                            val_loader=val_loader,
                                            margin=d['margin'],
                                            norm_dist=d['norm_dist'],

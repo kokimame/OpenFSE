@@ -3,9 +3,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from dataset.dataset_full_size import MOVEDatasetFull
-from models.move_model import MOVEModel
-from models.vgg_model import VGGModel
-from models.move_model_nt import MOVEModelNT
+from models.model_move import MOVEModel
+from models.model_vgg import VGGModel
+from models.model_move_nt import MOVEModelNT
 from utils.utils import average_precision
 from utils.utils import pairwise_distance_matrix
 from utils.utils import import_dataset_from_pt
@@ -69,17 +69,17 @@ def evaluate(defaults, save_name, dataset_name):
     ]
     print('Evaluating model {} on dataset {}.'.format(save_name, dataset_name))
 
-    move_model = VGGModel(emb_size=256)
+    model_move = VGGModel(emb_size=256)
 
     # loading a pre-trained model
     model_name = 'saved_models/model_{}.pt'.format(save_name)
 
-    move_model.load_state_dict(torch.load(model_name, map_location='cpu'))
-    move_model.eval()
+    model_move.load_state_dict(torch.load(model_name, map_location='cpu'))
+    model_move.eval()
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
-        move_model.cuda()
+        model_move.cuda()
 
     # loading test data, initializing the dataset object and the data loader
     test_data, test_labels = import_dataset_from_pt(filename=dataset_name)
@@ -88,7 +88,7 @@ def evaluate(defaults, save_name, dataset_name):
     test_map_loader = DataLoader(test_map_set, batch_size=1, shuffle=False)
 
     # calculating the pairwise distances
-    dist_map_matrix = test(model=move_model,
+    dist_map_matrix = test(model=model_move,
                            test_loader=test_map_loader).cpu()
 
     # calculating the performance metrics
