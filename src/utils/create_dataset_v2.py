@@ -7,7 +7,7 @@ from collections import OrderedDict
 from tqdm import tqdm
 
 USE_TOPK_LABELS = 100
-TRAIN_SPLIT = 0.8
+TRAIN_SPLIT = 0.9
 CHUNK_WIDTH = 128
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
 DATADIR = f'{ROOTDIR}/spec_tagged_mcuts'

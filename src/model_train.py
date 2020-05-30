@@ -3,6 +3,7 @@ import os
 import time
 
 import numpy as np
+from datetime import datetime
 import torch
 from torch.optim import SGD
 from torch.optim import lr_scheduler
@@ -127,7 +128,7 @@ def train(defaults, save_name, dataset_name):
     val_path = os.path.join(d['dataset_root'], dataset_name + '_val.pt')
 
     summary = dict()  # initializing the summary dict
-    writer = SummaryWriter()
+    writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H:%M:%S")}-{dataset_name}')
     # dataset_name =
 
     # initiating the necessary random seeds
@@ -269,13 +270,5 @@ def train(defaults, save_name, dataset_name):
         writer.add_scalar('Loss/Train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
         writer.add_scalar('mAP/Val', val_map_score, epoch)
-
-        # save summary, if needed, after each epoch
-        # if save_summary == 1:
-        #     if not os.path.exists('experiment_summaries/'):
-        #         os.mkdir('experiment_summaries/')
-        #
-        #     with open('experiment_summaries/summary_{}.json'.format(save_name), 'w') as log:
-        #         json.dump(summary, log, indent='\t')
 
     end_time = time.monotonic()  # end time of the entire training loop
