@@ -19,6 +19,10 @@ and metric-based loss captures the similarity among data more precisely than cla
 - VGG model: Input spectrogram (128x128) -> Embedding 256
 - Online Triplet Mining
 
+### TODO
+- create a dataset with FSD labels
+- make the framework so that you can easily train with different hyperparameters
+
 ### How to run
 ```
 cd src
