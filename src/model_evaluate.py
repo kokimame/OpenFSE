@@ -33,7 +33,7 @@ def test(model, test_loader, norm_dist=1):
         # tensor for storing all the embeddings obtained from the test set
         embed_all = torch.tensor([], device=device, dtype=torch.double)
 
-        for batch_idx, item in enumerate(tqdm(test_loader)):
+        for batch_idx, item in enumerate(tqdm(test_loader, desc='Testing the model...')):
 
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 item = item.cuda()
@@ -42,7 +42,7 @@ def test(model, test_loader, norm_dist=1):
 
             embed_all = torch.cat((embed_all, res_1))  # adding the embedding of the current song to the others
 
-        dist_all = pairwise_distance_matrix(embed_all)  # calculating the condensed distance matrix
+        dist_all = pairwise_distance_matrix(embed_all.cpu())  # calculating the condensed distance matrix
 
         if norm_dist == 1:  # normalizing the distances
             dist_all /= model.fin_emb_size
