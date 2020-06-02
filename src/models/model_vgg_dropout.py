@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class VGGModelV2(nn.Module):
+class VGGModelDropout(nn.Module):
     """
     Model object for MOVE.
     The explanation of the design choices can be found at https://arxiv.org/abs/1910.12551.
@@ -97,7 +97,7 @@ class VGGModelV2(nn.Module):
         x = self.prelu5(self.key_pool(self.conv5(x))) # 4x4x256
         x = self.prelu6(self.key_pool(self.conv6(x))) #2x2x256
 
-        x = torch.flatten(x, start_dim=1)
+        x = self.dropout(torch.flatten(x, start_dim=1))
         x = self.lin1(x)
 
         # Final activation
