@@ -14,6 +14,7 @@ from dataset.dataset_full_size import MOVEDatasetFull
 from models.model_move import MOVEModel
 from models.model_vgg import VGGModel
 from models.model_vgg_v2 import VGGModelV2
+from models.model_vgg_dropout import VGGModelDropout
 from models.model_move_nt import MOVEModelNT
 from model_evaluate import test
 from model_losses import triplet_loss_mining
@@ -128,7 +129,7 @@ def train(defaults, save_name, dataset_name):
     val_path = os.path.join(d['dataset_root'], dataset_name + '_val.pt')
 
     summary = dict()  # initializing the summary dict
-    writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H:%M:%S")}-{dataset_name}')
+    writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
     # dataset_name =
 
     # initiating the necessary random seeds
@@ -136,7 +137,7 @@ def train(defaults, save_name, dataset_name):
     torch.manual_seed(d['random_seed'])
 
     # initializing the model
-    model = VGGModelV2(emb_size=256)
+    model = VGGModelDropout(emb_size=256)
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
@@ -182,7 +183,7 @@ def train(defaults, save_name, dataset_name):
     val_loader = DataLoader(val_set, batch_size=d['num_of_labels'], shuffle=True,
                             collate_fn=triplet_mining_collate, drop_last=True)
     val_map_set = MOVEDatasetFull(val_data, val_labels)
-    val_map_loader = DataLoader(val_map_set, batch_size=1, shuffle=False)
+    val_map_loader = DataLoader(val_map_set, batch_size=8, shuffle=False)
 
     # initializing the learning rate scheduler
     if d['lr_schedule'] == 0:
@@ -218,7 +219,7 @@ def train(defaults, save_name, dataset_name):
                                           margin=d['margin'],
                                           norm_dist=d['norm_dist'],
                                           mining_strategy=d['mining_strategy'])
-        print('Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+        print('** Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the validation loop
         val_loss = validate_triplet_mining(model_move=model,
@@ -227,27 +228,9 @@ def train(defaults, save_name, dataset_name):
                                            norm_dist=d['norm_dist'],
                                            mining_strategy=d['mining_strategy'])
 
-        print('Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+        print('   Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
         start = time.monotonic()  # start time for the mean average precision calculation
-
-        # calculating the pairwise distances on validation set
-        dist_map_matrix = test(model=model,
-                               test_loader=val_map_loader).cpu()
-
-        # calculation performance metrics
-        # average_precision function uses similarities, not distances
-        # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
-        val_map_score = average_precision(
-            os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
-            -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
-        )
-        print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
-
-        # saving loss values for the summary
-        train_loss_log.append(train_loss)
-        val_loss_log.append(val_loss)
-        val_map_log.append(val_map_score.item())
 
         # saving model if needed
         if d['save_model'] == 1:
@@ -264,11 +247,21 @@ def train(defaults, save_name, dataset_name):
             lr_schedule.step()
 
         # dumping current loss values to the summary
-        summary['train_loss_log'] = train_loss_log
-        summary['val_loss_log'] = val_loss_log
-        summary['val_map_log'] = val_map_log
         writer.add_scalar('Loss/Train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
-        writer.add_scalar('mAP/Val', val_map_score, epoch)
+        # calculation performance metrics
+        # average_precision function uses similarities, not distances
+        # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
+        if epoch % d['test_per_epoch'] == 0:
+            # calculating the pairwise distances on validation set
+            dist_map_matrix = test(model=model,
+                                   test_loader=val_map_loader).cpu()
+
+            val_map_score = average_precision(
+                os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
+                -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
+            )
+            writer.add_scalar('mAP/Val', val_map_score, epoch)
+            print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
     end_time = time.monotonic()  # end time of the entire training loop

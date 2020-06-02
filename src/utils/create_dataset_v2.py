@@ -7,7 +7,7 @@ from collections import OrderedDict
 from tqdm import tqdm
 
 USE_TOPK_LABELS = 100
-TRAIN_SPLIT = 0.9
+TRAIN_SPLIT = 0.8
 CHUNK_WIDTH = 128
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
 DATADIR = f'{ROOTDIR}/spec_tagged_mcuts'
@@ -26,25 +26,29 @@ path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1])))
 # Setup dataset
 train_data, train_labels = [], []
 val_data, val_labels = [], []
-for label, paths in list(path_lookup.items())[:USE_TOPK_LABELS]:
-    last_train_index = int(len(paths) * TRAIN_SPLIT)
-    for i in range(len(paths)):
-        spec = np.load(paths[i])
-        if spec.shape[1] != CHUNK_WIDTH:
-            continue
-        tensor = torch.from_numpy(spec).double()
-        # Use parent directory as a label
-        if i <= last_train_index:
-            train_data.append(tensor.unsqueeze(0))
-            train_labels.append(label)
-        else:
-            val_data.append(tensor.unsqueeze(0))
-            val_labels.append(label)
+data_list = list(path_lookup.items())[:USE_TOPK_LABELS]
+min_sounds_per_label = min(len(paths) for label, paths in data_list)
+print(f'Sounds per Label: {min_sounds_per_label}')
 
-# Temporarily reduce the validation dataset
-# so that my GPU wont't go out of memory
-# val_data = val_data[:len(val_data)//2]
-# val_labels = val_labels[:len(val_data)]
+with tqdm(total=len(data_list)) as t:
+    for label, paths in data_list:
+        t.set_description(desc=f'Size (Train: {len(train_data):8d}|Validation: {len(val_data):8d})')
+
+        label, paths = label[:min_sounds_per_label], paths[:min_sounds_per_label]
+        # Both train and test dataset contain each label at the same ratio
+        last_train_index = int(len(paths) * TRAIN_SPLIT)
+        for i in range(len(paths)):
+            spec = np.load(paths[i])
+            if spec.shape[1] != CHUNK_WIDTH:
+                continue
+            tensor = torch.from_numpy(spec).double()
+            if i <= last_train_index:
+                train_data.append(tensor.unsqueeze(0))
+                train_labels.append(label)
+            else:
+                val_data.append(tensor.unsqueeze(0))
+                val_labels.append(label)
+        t.update()
 
 # Create data file based on the datasets
 for run_type, data, labels in [('train', train_data, train_labels), ('val', val_data, val_labels)]:

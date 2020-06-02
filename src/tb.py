@@ -17,4 +17,4 @@ latest_run = paths[-1]
 print(f'Visualize the latest run: {latest_run} at http://kokintu:4000/ (Press CTRL+C to quit)')
 
 FNULL = open(os.devnull, 'w')
-subprocess.call(['tensorboard', '--logdir', latest_run, '--port', '4000'], stdout=FNULL, stderr=subprocess.STDOUT)
+subprocess.call(['tensorboard', '--logdir', f'{latest_run}', '--port', '4000'], stdout=FNULL, stderr=subprocess.STDOUT)

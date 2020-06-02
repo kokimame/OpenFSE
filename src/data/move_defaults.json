@@ -1,18 +1,19 @@
 {
   "patch_len": 128,
-  "num_of_labels": 16,
+  "num_of_labels": 32,
   "emb_size": 256,
   "model_type": 2,
   "data_aug": 0,
   "save_model": 1,
   "save_summary": 1,
   "chunks": 1,
-  "num_of_epochs": 1200,
+  "num_of_epochs": 12000,
   "learning_rate": 0.1,
   "dataset_root": "/media/kokimame/Work_A_1TB/Project/Master_Files",
   "run_type": "train",
   "lr_schedule": 1,
-  "margin": 1.0,
+  "margin": 0.1,
+  "test_per_epoch": 10,
 
   "random_seed": 42,
   "lrsch_factor": 0.2,
@@ -41,6 +42,6 @@
     "norm_dist": "nd",
     "mining_strategy": "ms",
     "margin": "ma",
-    "ytc_labels": "ytc"
+    "test_per_epoch": "tpe"
   }
 }
