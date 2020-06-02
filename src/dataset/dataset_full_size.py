@@ -2,7 +2,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 
-class MOVEDatasetFull(Dataset):
+class DatasetFull(Dataset):
     """
     MOVEDataset object returns one song from the test data.
     Given features are in their full length.
@@ -16,7 +16,7 @@ class MOVEDatasetFull(Dataset):
         :param h: height of pcp features (number of bins, e.g. 12 or 23)
         :param w: width of pcp features (number of frames in the temporal dimension)
         """
-        self.data = data  # pcp features
+        self.data = data  # spectrogram feature
         self.labels = np.array(labels)  # labels of the pcp features
 
         self.labels_set = list(self.labels)  # the set of labels
@@ -27,8 +27,8 @@ class MOVEDatasetFull(Dataset):
     def __getitem__(self, index):
         """
         getitem function for the MOVEDataset object
-        :param index: index of the song picked by the dataloader
-        :return: pcp feature of the selected song
+        :param index: index of the sound picked by the dataloader
+        :return: pcp feature of the selected sound
         """
 
         item = self.data[index]

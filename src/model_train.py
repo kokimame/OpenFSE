@@ -9,8 +9,8 @@ from torch.optim import SGD
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 
-from dataset.dataset_fixed_size import MOVEDatasetFixed
-from dataset.dataset_full_size import MOVEDatasetFull
+from dataset.dataset_fixed_size import DatasetFixed
+from dataset.dataset_full_size import DatasetFull
 from models.model_move import MOVEModel
 from models.model_vgg import VGGModel
 from models.model_vgg_v2 import VGGModelV2
@@ -98,39 +98,14 @@ def validate_triplet_mining(model_move, val_loader, margin, norm_dist=1, mining_
 
 def train(defaults, save_name, dataset_name):
     """
-    Main training function of MOVE. For a detailed explanation of parameters,
+    Main training function. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
-    :param save_name: name to save model and experiment summary
-    :param train_path: path of the training data
-    :param chunks: how many chunks to use for the training data
-    :param val_path: path of the validation data
-    :param save_model: whether to save model (1) or not (0)
-    :param save_summary: whether to save experiment summary (1) or not (0)
-    :param seed: random seed
-    :param num_of_epochs: number of epochs for training
-    :param model_type: which model to use: MOVE (0) or MOVE without transposition invariance (1)
-    :param emb_size: the size of the final embeddings produced by the model
-    :param sum_method: the summarization method for the model
-    :param final_activation: final activation to use for the model
-    :param lr: value of learning rate
-    :param lrsch: which learning rate scheduler to use
-    :param lrsch_factor: the decrease rate of learning rate
-    :param momentum: momentum for optimizer
-    :param patch_len: number of frames for each song to be used in training
-    :param num_of_labels: number of labels per mini-batch
-    :param ytc: whether to exclude the songs overlapping with ytc for training
-    :param data_aug: whether to use data augmentation
-    :param norm_dist: whether to normalize squared euclidean distances with the embedding size
-    :param mining_strategy: which mining strategy to use
-    :param margin: the margin for the triplet loss
     """
     d = defaults
     train_path = os.path.join(d['dataset_root'], dataset_name + '_train')
     val_path = os.path.join(d['dataset_root'], dataset_name + '_val.pt')
 
-    summary = dict()  # initializing the summary dict
     writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
-    # dataset_name =
 
     # initiating the necessary random seeds
     np.random.seed(d['random_seed'])
@@ -151,11 +126,6 @@ def train(defaults, save_name, dataset_name):
                     lr=d['learning_rate'],
                     momentum=d['momentum'])
 
-    # initializing the lists for tracking losses
-    train_loss_log = []
-    val_loss_log = []
-    val_map_log = []
-
     # loading the training and validation data
     if d['chunks'] == 1:  # hack for handling 1 chunk for training data
         train_path = '{}_1.pt'.format(train_path)
@@ -167,22 +137,18 @@ def train(defaults, save_name, dataset_name):
     val_data, val_labels = import_dataset_from_pt('{}'.format(val_path), chunks=1)
     print('Validation data has been loaded!')
 
-    # selecting the H dimension of the input data
-    # different models handle different size inputs
-    patch_len, h = 128, 128
-
-    # initializing the MOVE dataset objects and data loaders
+    # Initialize the dataset objects and data loaders
     # we use validation set to track two things, (1) triplet loss, (2) mean average precision
     # to check mean average precision on the full songs,
     # we need to define another dataset object and data loader for it
-    train_set = MOVEDatasetFixed(train_data, train_labels, h=h, w=patch_len,
-                                 data_aug=d['data_aug'])
+    train_set = DatasetFixed(train_data, train_labels, h=d['input_height'], w=d['input_width'],
+                             data_aug=d['data_aug'])
     train_loader = DataLoader(train_set, batch_size=d['num_of_labels'], shuffle=True,
                               collate_fn=triplet_mining_collate, drop_last=True)
-    val_set = MOVEDatasetFixed(val_data, val_labels, h=h, w=patch_len, data_aug=0)
+    val_set = DatasetFixed(val_data, val_labels, h=d['input_height'], w=d['input_width'], data_aug=0)
     val_loader = DataLoader(val_set, batch_size=d['num_of_labels'], shuffle=True,
                             collate_fn=triplet_mining_collate, drop_last=True)
-    val_map_set = MOVEDatasetFull(val_data, val_labels)
+    val_map_set = DatasetFull(val_data, val_labels)
     val_map_loader = DataLoader(val_map_set, batch_size=8, shuffle=False)
 
     # initializing the learning rate scheduler
@@ -210,27 +176,18 @@ def train(defaults, save_name, dataset_name):
 
     # main training loop
     for epoch in range(d['num_of_epochs']):
-        last_epoch = epoch  # tracking last epoch to make sure that model didn't quit early
-
-        start = time.monotonic()  # start time for the training loop
         train_loss = train_triplet_mining(model=model,
                                           optimizer=optimizer,
                                           train_loader=train_loader,
                                           margin=d['margin'],
                                           norm_dist=d['norm_dist'],
                                           mining_strategy=d['mining_strategy'])
-        print('** Training loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
 
-        start = time.monotonic()  # start time for the validation loop
         val_loss = validate_triplet_mining(model_move=model,
                                            val_loader=val_loader,
                                            margin=d['margin'],
                                            norm_dist=d['norm_dist'],
                                            mining_strategy=d['mining_strategy'])
-
-        print('   Validation loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
-
-        start = time.monotonic()  # start time for the mean average precision calculation
 
         # saving model if needed
         if d['save_model'] == 1:
@@ -261,7 +218,6 @@ def train(defaults, save_name, dataset_name):
                 os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
                 -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
             )
-            writer.add_scalar('mAP/Val', val_map_score, epoch)
-            print('Test loop: Epoch {} - Duration {:.2f} mins'.format(epoch, (time.monotonic()-start)/60))
+            writer.add_scalar('mAP/Test', val_map_score, epoch)
 
     end_time = time.monotonic()  # end time of the entire training loop

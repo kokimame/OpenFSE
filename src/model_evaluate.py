@@ -2,7 +2,7 @@ import os
 import torch
 from torch.utils.data import DataLoader
 
-from dataset.dataset_full_size import MOVEDatasetFull
+from dataset.dataset_full_size import DatasetFull
 from models.model_move import MOVEModel
 from models.model_vgg import VGGModel
 from models.model_move_nt import MOVEModelNT
@@ -84,7 +84,7 @@ def evaluate(defaults, save_name, dataset_name):
     # loading test data, initializing the dataset object and the data loader
     test_data, test_labels = import_dataset_from_pt(filename=dataset_name)
 
-    test_map_set = MOVEDatasetFull(data=test_data, labels=test_labels)
+    test_map_set = DatasetFull(data=test_data, labels=test_labels)
     test_map_loader = DataLoader(test_map_set, batch_size=1, shuffle=False)
 
     # calculating the pairwise distances

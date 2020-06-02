@@ -1,5 +1,6 @@
 {
-  "patch_len": 128,
+  "input_width": 128,
+  "input_height": 128,
   "num_of_labels": 32,
   "emb_size": 256,
   "model_type": 2,
@@ -21,6 +22,8 @@
   "norm_dist": 1,
   "mining_strategy": 2,
   "abbr": {
+    "input_width": "iw",
+    "input_height": "ih",
     "train_path": "tp",
     "chunks": "ch",
     "val_path": "vp",
