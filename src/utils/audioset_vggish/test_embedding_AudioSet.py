@@ -67,23 +67,6 @@ OUTPUTDIR = f'{ROOTDIR}/projector'
 AUDIO_CHUNKS = f'{OUTPUTDIR}/audio'
 
 def main(_):
-    # # In this simple example, we run the examples from a single audio file through
-    # # the model. If none is provided, we generate a synthetic input.
-    # if FLAGS.wav_file:
-    #   wav_file = FLAGS.wav_file
-    # else:
-    #   # Write a WAV of a sine wav into an in-memory file object.
-    #   num_secs = 5
-    #   freq = 1000
-    #   sr = 44100
-    #   t = np.linspace(0, num_secs, int(num_secs * sr))
-    #   x = np.sin(2 * np.pi * freq * t)
-    #   # Convert to signed 16-bit samples.
-    #   samples = np.clip(x * 32768, -32768, 32767).astype(np.int16)
-    #   wav_file = six.BytesIO()
-    #   soundfile.write(wav_file, samples, sr, format='WAV', subtype='PCM_16')
-    #   wav_file.seek(0)
-
     ontology_lookup = {}
     with open(ONTROLOGY, 'r') as f:
         label_json = json.load(f)
@@ -126,15 +109,15 @@ def main(_):
         assert len(emb_tsv[0]) == len(emb)
 
 
-        with open(f'{OUTPUTDIR}/emb.tsv', 'w') as f:
-            for emb in emb_tsv:
-                csv.writer(f, delimiter='\t').writerow(emb)
-        with open(f'{OUTPUTDIR}/label.tsv', 'w') as f:
-            for label in label_tsv:
-                csv.writer(f, delimiter='\t').writerow(label)
-        with open(f'{OUTPUTDIR}/audio.tsv', 'w') as f:
-            for audio_path in audio_tsv:
-                csv.writer(f, delimiter='\t').writerow(audio_path)
+    with open(f'{OUTPUTDIR}/emb.tsv', 'w') as f:
+        for emb in emb_tsv:
+            csv.writer(f, delimiter='\t').writerow(emb)
+    with open(f'{OUTPUTDIR}/label.tsv', 'w') as f:
+        for label in label_tsv:
+            csv.writer(f, delimiter='\t').writerow(label)
+    with open(f'{OUTPUTDIR}/audio.tsv', 'w') as f:
+        for audio_path in audio_tsv:
+            csv.writer(f, delimiter='\t').writerow(audio_path)
 
 
 if __name__ == '__main__':
