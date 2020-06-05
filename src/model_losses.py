@@ -4,19 +4,19 @@ import torch.nn.functional as F
 from utils.utils import pairwise_distance_matrix
 
 
-def triplet_loss_mining(res_1, model_move, labels, margin=1, mining_strategy=2, norm_dist=1):
+def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy=2, norm_dist=1):
     """
     Online mining function for selecting the triplets
     :param res_1: embeddings in the mini-batch
-    :param model_move: model used to obtain the embeddings
+    :param labels: labels of the embeddings
+    :param embedding_size: Size of the output embedding
     :param margin: margin for the triplet loss
     :param mining_strategy: which mining strategy to use (0 for random, 1 for semi-hard, 2 for hard)
     :param norm_dist: whether to normalize the distances by the embedding size
-    :param labels: labels of the embeddings
     :return: triplet loss value
     """
 
-    # creating positive and negative masks for online mining
+    # Creating positive and negative masks for online mining
     aux = {}
     i_labels = []
     for l in labels:
@@ -35,17 +35,19 @@ def triplet_loss_mining(res_1, model_move, labels, margin=1, mining_strategy=2, 
     mask_pos = mask_diag * temp_mask
     mask_neg = mask_diag * (1 - mask_pos)
 
-    dist_all = pairwise_distance_matrix(res_1)  # getting the pairwise distance matrix
-    if norm_dist == 1:  # normalizing the distances by the embedding size
-        dist_all /= model_move.fin_emb_size
+    # Getting the pairwise distance matrix
+    dist_all = pairwise_distance_matrix(res_1)
+    # Normalizing the distances by the embedding size
+    if norm_dist == 1:
+        dist_all /= embedding_size
 
-    if mining_strategy == 0:  # random mining
+    if mining_strategy == 0:  # Random mining
         dists_neg, dists_pos = triplet_mining_random(dist_all, mask_pos, mask_neg)
-    elif mining_strategy == 1:  # semi-hard mining
+    elif mining_strategy == 1:  # Semi-hard mining
         dists_neg, dists_pos = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
-    else:  # hard mining
+    else:  # Hard mining
         dists_neg, dists_pos = triplet_mining_hard(dist_all, mask_pos, mask_neg)
-    # Loss = max(Distance_a_p - Distance_a_n + Margin, 0)
+    # Loss = max(Distance_anc_neg - Distance_anc_pos + Margin, 0)
     loss = F.relu(dists_neg + (margin - dists_pos))  # calculating triplet loss
 
     return loss.mean()

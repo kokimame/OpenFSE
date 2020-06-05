@@ -1,7 +1,7 @@
 {
   "input_width": 128,
   "input_height": 128,
-  "num_of_labels": 32,
+  "num_of_labels": 16,
   "emb_size": 256,
   "model_type": 2,
   "data_aug": 0,
@@ -12,7 +12,7 @@
   "learning_rate": 0.1,
   "dataset_root": "/media/kokimame/Work_A_1TB/Project/Master_Files",
   "run_type": "train",
-  "lr_schedule": 1,
+  "lr_milestones": [80],
   "margin": 0.1,
   "test_per_epoch": 10,
 
@@ -36,7 +36,7 @@
     "sum_method": "sum",
     "final_activation": "fa",
     "learning_rate": "lr",
-    "lr_schedule": "lrs",
+    "lr_milestones": "lrm",
     "lrsch_factor": "lrsf",
     "momentum": "mo",
     "patch_len": "pl",

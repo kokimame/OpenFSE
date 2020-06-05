@@ -22,6 +22,8 @@ from utils.utils import average_precision
 from utils.utils import import_dataset_from_pt
 from utils.utils import triplet_mining_collate
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+
 
 def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):
     """
@@ -37,13 +39,13 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mi
     model.train()  # setting the model to training mode
     loss_log = []  # initialize the list for logging loss values of each mini-batch
 
-    for batch_idx, batch in enumerate(train_loader):  # training loop
+    for batch in tqdm(train_loader, desc='Training the model...'):  # training loop
         items, labels = batch
-        if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
+        if torch.cuda.is_available():
             items = items.cuda()
-        res_1 = model(items)  # obtaining the embeddings of each song in the mini-batch
+        output = model(items)  # obtaining the embeddings of each song in the mini-batch
         # calculating the loss value of the mini-batch
-        loss = triplet_loss_mining(res_1, model, labels,
+        loss = triplet_loss_mining(output, labels, model.fin_emb_size,
                                    margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
@@ -86,7 +88,7 @@ def validate_triplet_mining(model_move, val_loader, margin, norm_dist=1, mining_
             res_1 = model_move(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss = triplet_loss_mining(res_1, model_move, labels,
+            loss = triplet_loss_mining(res_1, labels, model_move.fin_emb_size,
                                        margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
@@ -101,6 +103,7 @@ def train(defaults, save_name, dataset_name):
     Main training function. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
     """
+    print(f'Start training {datetime.now()}')
     d = defaults
     train_path = os.path.join(d['dataset_root'], dataset_name + '_train')
     val_path = os.path.join(d['dataset_root'], dataset_name + '_val.pt')
@@ -139,7 +142,7 @@ def train(defaults, save_name, dataset_name):
 
     # Initialize the dataset objects and data loaders
     # we use validation set to track two things, (1) triplet loss, (2) mean average precision
-    # to check mean average precision on the full songs,
+    # to check mean average precision on the full sounds,
     # we need to define another dataset object and data loader for it
     train_set = DatasetFixed(train_data, train_labels, h=d['input_height'], w=d['input_width'],
                              data_aug=d['data_aug'])
@@ -151,19 +154,13 @@ def train(defaults, save_name, dataset_name):
     val_map_set = DatasetFull(val_data, val_labels)
     val_map_loader = DataLoader(val_map_set, batch_size=8, shuffle=False)
 
-    # initializing the learning rate scheduler
-    if d['lr_schedule'] == 0:
-        pass
-    else:
-        if d['lr_schedule'] == 1:
-            milestones = [80]
-        else:
-            milestones = [80, 100]
+    # Initializing the learning rate scheduler
+    if d['lr_milestones'] is not None:
         lr_schedule = lr_scheduler.MultiStepLR(optimizer,
-                                               milestones=milestones,
+                                               milestones=d['lr_milestones'],
                                                gamma=d['lrsch_factor'])
 
-    # calculating the number of parameters of the model
+    # Calculating the number of parameters of the model
     tmp = 0
     for p in model.parameters():
         tmp += np.prod(p.size())
@@ -172,9 +169,7 @@ def train(defaults, save_name, dataset_name):
     print('--- Training starts ---')
     print('Model name: {}'.format(save_name))
 
-    start_time = time.monotonic()  # start time for tracking the duration of entire training
-
-    # main training loop
+    # Main training loop
     for epoch in range(d['num_of_epochs']):
         train_loss = train_triplet_mining(model=model,
                                           optimizer=optimizer,
@@ -195,18 +190,14 @@ def train(defaults, save_name, dataset_name):
                 os.mkdir('saved_models/')
             torch.save(model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
 
-        # printing the losses
-        print('training_loss: {}'.format(train_loss))
-        print('val_loss: {}'.format(val_loss))
-
-        # activate learning rate scheduler if needed
-        if d['lr_schedule'] != 0:
+        # Activate learning rate scheduler if needed
+        if d['lr_milestones'] is not None:
             lr_schedule.step()
 
         # dumping current loss values to the summary
         writer.add_scalar('Loss/Train', train_loss, epoch)
         writer.add_scalar('Loss/Val', val_loss, epoch)
-        # calculation performance metrics
+        # Calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
         if epoch % d['test_per_epoch'] == 0:
@@ -219,5 +210,3 @@ def train(defaults, save_name, dataset_name):
                 -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
             )
             writer.add_scalar('mAP/Test', val_map_score, epoch)
-
-    end_time = time.monotonic()  # end time of the entire training loop
