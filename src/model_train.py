@@ -205,8 +205,12 @@ def train(defaults, save_name, dataset_name):
             dist_map_matrix = test(model=model,
                                    test_loader=val_map_loader).cpu()
 
-            val_map_score = average_precision(
+            mAP, mrr, mr, top1, top10 = average_precision(
                 os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
                 -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
             )
-            writer.add_scalar('mAP/Test', val_map_score, epoch)
+            writer.add_scalar('Test/Top10', top10, epoch)
+            writer.add_scalar('Test/Top1', top1, epoch)
+            writer.add_scalar('Test/MR', mr, epoch)
+            writer.add_scalar('Test/MRR', mrr, epoch)
+            writer.add_scalar('Test/mAP', mAP, epoch)

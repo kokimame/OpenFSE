@@ -141,8 +141,8 @@ def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
     print('Top1: {}'.format(top1.item()))
     print('Top10: {}'.format(top10.item()))
     if reduce_mean:
-        return ap.mean()
-    return ap
+        return ap.mean(), mrr, mr, top1, top10
+    return ap, mrr, mr, top1, top10
 
 
 def pairwise_distance_matrix(x, y=None, eps=1e-12):
