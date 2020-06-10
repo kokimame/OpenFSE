@@ -185,7 +185,7 @@ def train(defaults, save_name, dataset_name):
                                            mining_strategy=d['mining_strategy'])
 
         # saving model if needed
-        if d['save_model'] == 1:
+        if d['save_model']:
             if not os.path.exists('saved_models/'):
                 os.mkdir('saved_models/')
             torch.save(model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))

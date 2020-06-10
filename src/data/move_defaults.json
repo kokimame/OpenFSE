@@ -5,8 +5,6 @@
   "emb_size": 256,
   "model_type": 2,
   "data_aug": 0,
-  "save_model": 1,
-  "save_summary": 1,
   "chunks": 1,
   "num_of_epochs": 12000,
   "learning_rate": 0.001,
@@ -17,6 +15,7 @@
   "test_per_epoch": 10,
   "norm_dist": true,
   "mining_strategy": 2,
+  "save_model": true,
 
   "random_seed": 42,
   "lrsch_factor": 0.2,
