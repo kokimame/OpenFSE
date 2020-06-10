@@ -72,7 +72,7 @@ class VGGModelDropout(nn.Module):
                                bias=True)
         nn.init.kaiming_normal_(self.conv6.weight, a=0.01, mode='fan_in', nonlinearity='leaky_relu')
 
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=0.4)
 
         self.fin_emb_size = emb_size
 
@@ -97,7 +97,7 @@ class VGGModelDropout(nn.Module):
         x = self.prelu5(self.key_pool(self.conv5(x))) # 4x4x256
         x = self.prelu6(self.key_pool(self.conv6(x))) #2x2x256
 
-        x = self.dropout(torch.flatten(x, start_dim=1))
+        x = torch.flatten(x, start_dim=1)
         x = self.lin1(x)
 
         # Final activation
