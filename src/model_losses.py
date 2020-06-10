@@ -39,13 +39,13 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
         dist_all /= embedding_size
 
     if mining_strategy == 0:  # Random mining
-        dists_neg, dists_pos = triplet_mining_random(dist_all, mask_pos, mask_neg)
+        dists_pos, dists_neg = triplet_mining_random(dist_all, mask_pos, mask_neg)
     elif mining_strategy == 1:  # Semi-hard mining
-        dists_neg, dists_pos = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
+        dists_pos, dists_neg = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
     else:  # Hard mining
-        dists_neg, dists_pos = triplet_mining_hard(dist_all, mask_pos, mask_neg)
-    # Loss = max(Distance_anc_neg - Distance_anc_pos + Margin, 0)
-    loss = F.relu(dists_neg + (margin - dists_pos))  # calculating triplet loss
+        dists_pos, dists_neg = triplet_mining_hard(dist_all, mask_pos, mask_neg)
+    # Loss = max(Distance_anc_pos - Distance_anc_neg + Margin, 0)
+    loss = F.relu(dists_pos - dists_neg + margin)  # calculating triplet loss
 
     return loss.mean()
 
