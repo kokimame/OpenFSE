@@ -65,7 +65,7 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mi
     return train_loss
 
 
-def validate_triplet_mining(model_move, val_loader, margin, norm_dist=1, mining_strategy=2):
+def validate_triplet_mining(model_move, val_loader, margin, norm_dist=True, mining_strategy=2):
     """
     validation loop for one epoch
     :param model_move: model to be used for validation

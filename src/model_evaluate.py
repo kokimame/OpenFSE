@@ -44,7 +44,7 @@ def test(model, test_loader, norm_dist=1):
 
         dist_all = pairwise_distance_matrix(embed_all.cpu())  # calculating the condensed distance matrix
 
-        if norm_dist == 1:  # normalizing the distances
+        if norm_dist:  # normalizing the distances
             dist_all /= model.fin_emb_size
 
     return dist_all

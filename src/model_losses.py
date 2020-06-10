@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from utils.utils import pairwise_distance_matrix
 
 
-def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy=2, norm_dist=1):
+def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy=2, norm_dist=True):
     """
     Online mining function for selecting the triplets
     :param res_1: embeddings in the mini-batch
@@ -35,7 +35,7 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
     # Getting the pairwise distance matrix
     dist_all = pairwise_distance_matrix(res_1)
     # Normalizing the distances by the embedding size
-    if norm_dist == 1:
+    if norm_dist:
         dist_all /= embedding_size
 
     if mining_strategy == 0:  # Random mining
