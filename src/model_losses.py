@@ -17,12 +17,9 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
     """
 
     # Creating positive and negative masks for online mining
-    aux = {}
     i_labels = []
-    for l in labels:
-        if l not in aux:
-            aux[l] = len(aux)
-        i_labels += [aux[l]] * 4
+    for i, l in enumerate(labels):
+        i_labels += [i] * 4
 
     i_labels = torch.Tensor(i_labels).view(-1, 1)
 
@@ -66,14 +63,13 @@ def triplet_mining_hard(dist_all, mask_pos, mask_neg):
     else:
         device = 'cpu'
 
-    # selecting the positive elements of triplets
+    # Selecting the positive elements of triplets
     _, sel_pos = torch.max(dist_all * mask_pos.double(), 1)
     dists_pos = torch.gather(dist_all, 1, sel_pos.view(-1, 1))
-
-    # modifying the negative mask for hard mining
+    # Modifying the negative mask for hard mining
     mask_neg = torch.where(mask_neg == 0, torch.tensor(float('inf'), device=device), torch.tensor(1., device=device))
 
-    # selecting the negative elements of triplets
+    # Selecting the negative elements of triplets
     _, sel_neg = torch.min(dist_all + mask_neg.double(), 1)
     dists_neg = torch.gather(dist_all, 1, sel_neg.view(-1, 1))
 
@@ -107,11 +103,11 @@ def triplet_mining_semihard(dist_all, mask_pos, mask_neg):
     :param mask_neg: mask for negative elements of triplets
     :return: selected positive and negative distances
     """
-    # selecting the positive elements of triplets
+    # Selecting the positive elements of triplets
     _, sel_pos = torch.max(mask_pos.float() + torch.rand_like(dist_all), 1)
     dists_pos = torch.gather(dist_all, 1, sel_pos.view(-1, 1))
 
-    # selecting the negative elements of triplets
+    # Selecting the negative elements of triplets
     _, sel_neg = torch.max((mask_neg + mask_neg * (dist_all < dists_pos.expand_as(dist_all)).long()).float() +
                            torch.rand_like(dist_all), 1)
     dists_neg = torch.gather(dist_all, 1, sel_neg.view(-1, 1))

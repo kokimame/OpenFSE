@@ -9,11 +9,11 @@
   "save_summary": 1,
   "chunks": 1,
   "num_of_epochs": 12000,
-  "learning_rate": 0.1,
+  "learning_rate": 0.01,
   "dataset_root": "/media/kokimame/Work_A_1TB/Project/Master_Files",
   "run_type": "train",
   "lr_milestones": [80],
-  "margin": 0.1,
+  "margin": 10,
   "test_per_epoch": 10,
 
   "random_seed": 42,

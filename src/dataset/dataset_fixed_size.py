@@ -90,7 +90,7 @@ class DatasetFixed(Dataset):
 
     def __len__(self):
         """
-        Size of the MOVEDataset object
+        Size of the Dataset object
         :return: length of the clique list containing all the cliques (multiple cliques included for larger ones)
         """
         return len(self.clique_list)
