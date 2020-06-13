@@ -14,6 +14,11 @@ our upcoming paper.
 Assuming yes since clustering often relies on a similarity measure
 and metric-based loss captures the similarity among data more precisely than class-based loss (e.g. cross-entropy)
 
+### Project Overview
+<p align="center">
+<img src="./notes/Triplet-Loss_Semantic.png" width="500" height="600" title="logo">
+</p>
+
 ### About implementation
 - Workflow/basic framework is based on [MOVE](https://github.com/furkanyesiler/move/)
 - VGG model: Input spectrogram (128x128) -> Embedding 256
