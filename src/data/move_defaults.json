@@ -7,7 +7,7 @@
   "data_aug": 0,
   "chunks": 1,
   "num_of_epochs": 12000,
-  "learning_rate": 0.001,
+  "learning_rate": 0.1,
   "dataset_root": "/media/kokimame/Work_A_1TB/Project/Master_Files",
   "run_type": "train",
   "lr_milestones": [80],
@@ -16,6 +16,7 @@
   "norm_dist": true,
   "mining_strategy": 2,
   "save_model": true,
+  "mAP@k": null,
 
   "random_seed": 42,
   "lrsch_factor": 0.2,
