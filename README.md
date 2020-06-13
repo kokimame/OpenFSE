@@ -16,7 +16,7 @@ and metric-based loss captures the similarity among data more precisely than cla
 
 ### Project Overview
 <p align="center">
-<img src="./notes/Triplet-Loss_Semantic.png" width="500" height="600" title="logo">
+<img src="./notes/Triplet-Loss_Semantic.png" width="500" height="600" title="overview">
 </p>
 
 ### About implementation
