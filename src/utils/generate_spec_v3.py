@@ -11,8 +11,8 @@ from mutagen.mp3 import MP3
 
 # Suppress soundfile warning on loading MP3
 warnings.simplefilter('ignore')
-DOWNLOAD_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/audio_all'
-SPEC_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/spec_tagged_mcuts'
+DOWNLOAD_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/audio_200k'
+SPEC_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/spec_200k'
 
 # Check if the directories exist
 if not os.path.exists(SPEC_DIR):

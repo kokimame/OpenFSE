@@ -14,10 +14,10 @@ from models.model_vgg_dropout import VGGModelDropout
 from src.utils import generate_spec_v3
 
 
-SAVED_MODEL = '../saved_models/model_tag_top100_2020-06-01_17:39:17.707426.pt'
-ONTROLOGY = '../../json/ontology.json'
+SAVED_MODEL = '../saved_models/unique5_12k.pt'
+ONTROLOGY = '../data/ontology.json'
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-OUTPUTDIR = f'{ROOTDIR}/projector'
+OUTPUTDIR = f'{ROOTDIR}/unique5'
 
 AUDIO_CHUNKS = f'{OUTPUTDIR}/audio'
 
@@ -30,7 +30,7 @@ for entry in label_json:
     ontology_lookup[label_id] = entry
 
 paths = glob.glob(os.path.join(AUDIO_CHUNKS, '*', '*.wav'))
-model = VGGModelDropout(emb_size=256)
+model = VGGModelDropout(emb_size=512)
 model.load_state_dict(torch.load(SAVED_MODEL))
 model.eval()
 

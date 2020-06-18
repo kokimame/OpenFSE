@@ -27,7 +27,7 @@ with open('../data/tags_ppc_top_500.csv', 'r') as f:
 ids = [annon[0] for annon in annons[1:]] # Remove header
 
 total_download = 0
-start_chunk = 797
+start_chunk = 3480
 for ith, id_chunk in enumerate(chunks(ids, 50)):
 
     if ith < start_chunk: continue

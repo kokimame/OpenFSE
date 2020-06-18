@@ -6,17 +6,15 @@ import csv
 import numpy as np
 import random
 from pathlib import Path
-from models.model_vgg import VGGModel
-from models.model_vgg_v2 import VGGModelV2
 from src.utils import generate_spec_v3
 from tqdm import tqdm
 
-TOTAL_EMBEDDINGS = 2000
-ONTROLOGY = '../../json/ontology.json'
+TOTAL_EMBEDDINGS = 500
+ONTROLOGY = '../data/ontology.json'
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-USED_DATASET_PATH = f'{ROOTDIR}/tag_top100_val.pt'
+USED_DATASET_PATH = f'{ROOTDIR}/unique5_val.pt'
 AUDIODIR = f'{ROOTDIR}/audio_all'
-OUTPUTDIR = f'{ROOTDIR}/projector'
+OUTPUTDIR = f'{ROOTDIR}/unique5'
 
 used_dataset = torch.load(USED_DATASET_PATH)
 used_labels = set(used_dataset['labels'])
@@ -30,7 +28,7 @@ for entry in label_json:
     assert label_id not in ontology_lookup.keys()
     ontology_lookup[label_id] = entry
 
-print(', '.join([ontology_lookup[label]['name'] for label in used_labels]))
+print('Label Used: ', ', '.join([ontology_lookup[label]['name'] for label in used_labels]))
 
 paths = glob.glob(os.path.join(AUDIODIR, '*', '*.mp3'))
 paths = [path for path in paths if Path(Path(path).parent).stem in used_labels]
@@ -39,6 +37,8 @@ label_counts = {}
 emb_tsv = []
 label_tsv = []
 audio_tsv = []
+
+print(f'Total: {TOTAL_EMBEDDINGS} | {TOTAL_EMBEDDINGS / len(used_labels)} instances for each labels.')
 
 for path in tqdm(paths):
     # Use parent directory as a label
