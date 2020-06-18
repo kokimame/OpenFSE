@@ -33,7 +33,7 @@ def test(model, test_loader, norm_dist=1):
         # tensor for storing all the embeddings obtained from the test set
         embed_all = torch.tensor([], device=device, dtype=torch.double)
 
-        for batch_idx, item in enumerate(tqdm(test_loader, desc='Testing the model...')):
+        for batch_idx, item in enumerate(tqdm(test_loader, desc='Testing  the model .....')):
 
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 item = item.cuda()
@@ -55,16 +55,15 @@ def evaluate(defaults, save_name, dataset_name):
     Main evaluation function of MOVE. For a detailed explanation of parameters,
     please check 'python move_main.py -- help'
     :param save_name: name to save model and experiment summary
-    :param model_type: which model to use: MOVE (0) or MOVE without transposition invariance (1)
     :param emb_size: the size of the final embeddings produced by the model
     :param sum_method: the summarization method for the model
     :param final_activation: final activation to use for the model
     :param dataset: which dataset to evaluate the model on. (0) validation set, (1) da-tacos, (2) ytc
     :param dataset_name: name of the file to evaluate
     """
-    model_type, emb_size, sum_method, final_activation, dataset, dataset_root = [
+    emb_size, sum_method, final_activation, dataset, dataset_root = [
         defaults[key.strip()] for key in """
-        model_type, emb_size, sum_method, final_activation, dataset, dataset_root
+        emb_size, sum_method, final_activation, dataset, dataset_root
         """.split(',')
     ]
     print('Evaluating model {} on dataset {}.'.format(save_name, dataset_name))
