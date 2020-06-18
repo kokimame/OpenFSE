@@ -44,10 +44,21 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
         dists_pos, dists_neg = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
     else:  # Hard mining
         dists_pos, dists_neg = triplet_mining_hard(dist_all, mask_pos, mask_neg)
-    # Loss = max(Distance_anc_pos - Distance_anc_neg + Margin, 0)
-    loss = F.relu(dists_pos - dists_neg + margin)  # calculating triplet loss
 
-    return loss.mean()
+    margin_satisfied = 0
+    # Loss = max(Distance_anc_pos - Distance_anc_neg + Margin, 0)
+
+    dists = dists_pos - dists_neg
+    # loss = F.relu(torch.where(dists > 1, dists ** 2, dists) + margin)
+
+    loss = F.relu(dists_pos - dists_neg + margin)  # calculating triplet loss
+    for pos, neg in zip(dists_pos, dists_neg):
+        if pos - neg + margin  <= 0:
+            margin_satisfied += 1
+
+    margin_satisfied_rate = margin_satisfied / len(dists_pos)
+
+    return loss.mean(), dists_pos.mean(), dists_neg.mean(), margin_satisfied_rate
 
 
 def triplet_mining_hard(dist_all, mask_pos, mask_neg):

@@ -25,7 +25,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 
-def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mining_strategy=2):
+def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True, mining_strategy=2):
     """
     Training loop for one epoch
     :param model: model to be trained
@@ -38,15 +38,18 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mi
     """
     model.train()  # setting the model to training mode
     loss_log = []  # initialize the list for logging loss values of each mini-batch
+    pos_log = []
+    neg_log = []
+    msr_log = []
 
-    for batch in tqdm(train_loader, desc='Training the model...'):  # training loop
+    for batch in tqdm(train_loader, desc='Training the model .....'):  # training loop
         items, labels = batch
         if torch.cuda.is_available():
             items = items.cuda()
         output = model(items)  # obtaining the embeddings of each song in the mini-batch
         # calculating the loss value of the mini-batch
-        loss = triplet_loss_mining(output, labels, model.fin_emb_size,
-                                   margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
+        loss, pos_avg, neg_avg, msr = triplet_loss_mining(output, labels, model.fin_emb_size,
+                                        margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
@@ -59,16 +62,22 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=1, mi
 
         # logging the loss value of the current mini-batch
         loss_log.append(loss.cpu().item())
+        pos_log.append(pos_avg.cpu().item())
+        neg_log.append(neg_avg.cpu().item())
+        msr_log.append(msr)
 
     train_loss = np.mean(np.array(loss_log))  # averaging the loss values of each mini-batch
+    train_pos = np.mean(np.array(pos_log))
+    train_neg = np.mean(np.array(neg_log))
+    train_msr = np.mean(np.array(msr_log))
 
-    return train_loss
+    return train_loss, train_pos, train_neg, train_msr
 
 
-def validate_triplet_mining(model_move, val_loader, margin, norm_dist=True, mining_strategy=2):
+def validate_triplet_mining(model, val_loader, margin, norm_dist=True, mining_strategy=2):
     """
     validation loop for one epoch
-    :param model_move: model to be used for validation
+    :param model: model to be used for validation
     :param val_loader: dataloader for validation
     :param margin: margin for the triplet loss
     :param norm_dist: whether to normalize distances by the embedding size
@@ -76,8 +85,11 @@ def validate_triplet_mining(model_move, val_loader, margin, norm_dist=True, mini
     :return: validation loss of the current epoch
     """
     with torch.no_grad():  # deactivating gradient tracking for testing
-        model_move.eval()  # setting the model to evaluation mode
+        model.eval()  # setting the model to evaluation mode
         loss_log = []  # initialize the list for logging loss values of each mini-batch
+        msr_log = []
+        pos_log = []
+        neg_log = []
 
         for batch_idx, batch in enumerate(val_loader):  # training loop
             items, labels = batch
@@ -85,18 +97,24 @@ def validate_triplet_mining(model_move, val_loader, margin, norm_dist=True, mini
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 items = items.cuda()
 
-            res_1 = model_move(items)  # obtaining the embeddings of each song in the mini-batch
+            res_1 = model(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss = triplet_loss_mining(res_1, labels, model_move.fin_emb_size,
-                                       margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
+            loss, pos_avg, neg_avg, msr = triplet_loss_mining(res_1, labels, model.fin_emb_size,
+                                                              margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
             loss_log.append(loss.cpu().item())
+            pos_log.append(pos_avg.cpu().item())
+            neg_log.append(neg_avg.cpu().item())
+            msr_log.append(msr)
 
         val_loss = np.mean(np.array(loss_log))  # averaging the loss values of each mini-batch
+        val_pos = np.mean(np.array(pos_log))
+        val_neg = np.mean(np.array(neg_log))
+        val_msr = np.mean(np.array(msr_log))  # averaging the loss values of each mini-batch
 
-    return val_loss
+    return val_loss, val_pos, val_neg, val_msr
 
 def train(defaults, save_name, dataset_name):
     """
@@ -114,8 +132,12 @@ def train(defaults, save_name, dataset_name):
     np.random.seed(d['random_seed'])
     torch.manual_seed(d['random_seed'])
 
+    if not os.path.exists('saved_models/'):
+        os.mkdir('saved_models/')
+
     # initializing the model
-    model = VGGModelDropout(emb_size=256)
+    model = VGGModelDropout(emb_size=d['emb_size'])
+    # model.load_state_dict(torch.load('saved_models/unique5_12k.pt'))
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
@@ -135,6 +157,7 @@ def train(defaults, save_name, dataset_name):
     else:
         train_path = train_path
     train_data, train_labels = import_dataset_from_pt('{}'.format(train_path), chunks=d['chunks'])
+
     print('Train data has been loaded!')
 
     val_data, val_labels = import_dataset_from_pt('{}'.format(val_path), chunks=1)
@@ -144,15 +167,17 @@ def train(defaults, save_name, dataset_name):
     # we use validation set to track two things, (1) triplet loss, (2) mean average precision
     # to check mean average precision on the full sounds,
     # we need to define another dataset object and data loader for it
-    train_set = DatasetFixed(train_data, train_labels, h=d['input_height'], w=d['input_width'],
-                             data_aug=d['data_aug'])
+    train_set = DatasetFixed(train_data, train_labels, h=d['input_height'], w=d['input_width'])# , data_aug=d['data_aug'])
     train_loader = DataLoader(train_set, batch_size=d['num_of_labels'], shuffle=True,
                               collate_fn=triplet_mining_collate, drop_last=True)
-    val_set = DatasetFixed(val_data, val_labels, h=d['input_height'], w=d['input_width'], data_aug=0)
+
+    val_set = DatasetFixed(val_data, val_labels, h=d['input_height'], w=d['input_width'])#, data_aug=d['data_aug'])
     val_loader = DataLoader(val_set, batch_size=d['num_of_labels'], shuffle=True,
                             collate_fn=triplet_mining_collate, drop_last=True)
-    val_map_set = DatasetFull(val_data, val_labels)
-    val_map_loader = DataLoader(val_map_set, batch_size=8, shuffle=False)
+
+    # Validation dataset to compute mAP
+    val_mAP_set = DatasetFull(val_data, val_labels)
+    val_mAP_loader = DataLoader(val_mAP_set, batch_size=8, shuffle=False)
 
     # Initializing the learning rate scheduler
     if d['lr_milestones'] is not None:
@@ -171,23 +196,22 @@ def train(defaults, save_name, dataset_name):
 
     # Main training loop
     for epoch in range(d['num_of_epochs']):
-        train_loss = train_triplet_mining(model=model,
+        time.sleep(0.01)
+        train_loss, train_pos, train_neg, train_msr = train_triplet_mining(model=model,
                                           optimizer=optimizer,
                                           train_loader=train_loader,
                                           margin=d['margin'],
                                           norm_dist=d['norm_dist'],
                                           mining_strategy=d['mining_strategy'])
 
-        val_loss = validate_triplet_mining(model_move=model,
-                                           val_loader=val_loader,
-                                           margin=d['margin'],
-                                           norm_dist=d['norm_dist'],
-                                           mining_strategy=d['mining_strategy'])
+        val_loss, val_pos, val_neg, val_msr = validate_triplet_mining(model=model,
+                                                                      val_loader=val_loader,
+                                                                      margin=d['margin'],
+                                                                      norm_dist=d['norm_dist'],
+                                                                      mining_strategy=d['mining_strategy'])
 
         # saving model if needed
         if d['save_model']:
-            if not os.path.exists('saved_models/'):
-                os.mkdir('saved_models/')
             torch.save(model.state_dict(), 'saved_models/model_{}.pt'.format(save_name))
 
         # Activate learning rate scheduler if needed
@@ -195,22 +219,31 @@ def train(defaults, save_name, dataset_name):
             lr_schedule.step()
 
         # dumping current loss values to the summary
-        writer.add_scalar('Loss/Train', train_loss, epoch)
-        writer.add_scalar('Loss/Val', val_loss, epoch)
+        writer.add_scalar('Train/Loss', train_loss, epoch)
+        writer.add_scalars('Train/Distance', {'pos': train_pos, 'neg': train_neg}, epoch)
+        writer.add_scalar('Train/Margin Satisfied (%)', train_msr * 100, epoch)
+        writer.add_scalar('Val/Loss', val_loss, epoch)
+        writer.add_scalars('Val/Distance', {'pos': val_pos, 'neg': val_neg}, epoch)
+        writer.add_scalar('Val/Margin Satisfied (%)', val_msr * 100, epoch)
+        print(f'Train result: Loss({train_loss:.2f})\n'
+              f'Avg. Dist.(P:{train_pos:.2f}|N:{train_neg:.2f}|P-N:{train_pos - train_neg:.2f})\n'
+              f'Margin Satisfied (%)({int(train_msr * 100)})')
         # Calculation performance metrics
         # average_precision function uses similarities, not distances
         # we multiple the distances with -1, and set the diagonal (self-similarity) -inf
         if epoch % d['test_per_epoch'] == 0:
             # calculating the pairwise distances on validation set
             dist_map_matrix = test(model=model,
-                                   test_loader=val_map_loader).cpu()
+                                   test_loader=val_mAP_loader).cpu()
 
-            mAP, mrr, mr, top1, top10 = average_precision(
+            mAP, mrr, mr, top1, top10, ones_avg = average_precision(
                 os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
                 -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
+                k=d['mAP@k']
             )
-            writer.add_scalar('Test/Top10', top10, epoch)
-            writer.add_scalar('Test/Top1', top1, epoch)
-            writer.add_scalar('Test/MR', mr, epoch)
-            writer.add_scalar('Test/MRR', mrr, epoch)
+            # writer.add_scalar('Test/Top10', top10, epoch)
+            # writer.add_scalar('Test/Top1', top1, epoch)
+            # writer.add_scalar('Test/MR', mr, epoch)
+            # writer.add_scalar('Test/MRR', mrr, epoch)
             writer.add_scalar('Test/mAP', mAP, epoch)
+            writer.add_scalar('Test/1sAvg', ones_avg, epoch)

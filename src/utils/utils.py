@@ -9,7 +9,6 @@ def import_dataset_from_pt(filename, chunks=1):
     Loading a dataset stored in .pt format
     :param filename: name of the .pt file to load
     :param chunks: number of chunks to load
-    :param model_type: type of the model to use (related to pcp feature size)
     :return: lists that contain data and labels (elements are in the same order)
     """
 
@@ -111,14 +110,20 @@ def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
     :param reduce_mean: whether to take mean of the average precision values of each query
     :return: mean average precision value
     """
-    # print(f'Compute average precision using {ytrue_path}')
     ytrue = torch.load(ytrue_path).float()
-    if k is None:
+    if k is None or not 3 <= k <= ypred.size(1):
         k = ypred.size(1)
     # spred stores the ranks of similarity (closer first)
     _, spred = torch.topk(ypred, k, dim=1)
     # 'found' reorders ytrue (binary matrix) according to spred
     found = torch.gather(ytrue, 1, spred)
+    # For debug
+    ytrue_sum = torch.sum(ytrue, 1)
+    found_sum = torch.sum(found, 1)
+
+    # The position of true label in the distance matrix
+    ones_indices = (found == 1).nonzero()
+    ones_average = np.mean(ones_indices[:, 1].tolist())
 
     temp = torch.arange(k).float() * 1e-6
 
@@ -130,19 +135,22 @@ def average_precision(ytrue_path, ypred, k=None, eps=1e-10, reduce_mean=True):
 
     # pair-wise prediction is always square
     pos = torch.arange(1, spred.size(1)+1).unsqueeze(0).to(ypred.device)
-    prec = torch.cumsum(found, 1)/pos.float()
-    #TODO: 'found' seems to be binary and usable as the mask as it is
+    cumsum = torch.cumsum(found, 1)
+    prec = cumsum/pos.float()
+    #TODO: 'found' seems binary and usable as the mask as it is
     mask = (found > 0).float()
     ap = torch.sum(prec*mask, 1)/(torch.sum(ytrue, 1)+eps)
     ap = ap[torch.sum(ytrue, 1) > 0]
+
     print('mAP: {:.3f}'.format(ap.mean().item()))
     print('MRR: {:.3f}'.format(mrr.item()))
     print('MR: {:.3f}'.format(mr.item()))
     print('Top1: {}'.format(top1.item()))
     print('Top10: {}'.format(top10.item()))
+    print('1sAvg: {:.1f}'.format(ones_average))
     if reduce_mean:
-        return ap.mean(), mrr, mr, top1, top10
-    return ap, mrr, mr, top1, top10
+        return ap.mean(), mrr, mr, top1, top10, ones_average
+    return ap, mrr, mr, top1, top10, ones_average
 
 
 def pairwise_distance_matrix(x, y=None, eps=1e-12):
