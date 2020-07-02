@@ -61,9 +61,9 @@ flags.DEFINE_string(
 FLAGS = flags.FLAGS
 
 tf.logging.set_verbosity(tf.logging.ERROR)
-ONTROLOGY = '/home/kokimame/Dropbox/OpenFSE/json/ontology.json'
+ONTROLOGY = '/home/kokimame/Dropbox/OpenFSE/src/data/ontology.json'
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-OUTPUTDIR = f'{ROOTDIR}/projector'
+OUTPUTDIR = f'{ROOTDIR}/unique5'
 AUDIO_CHUNKS = f'{OUTPUTDIR}/audio'
 
 def main(_):
@@ -100,9 +100,11 @@ def main(_):
             # Run inference and postprocessing.
             [embedding_batch] = sess.run([embedding_tensor],
                                          feed_dict={features_tensor: examples_batch})
-            emb = []
-            for embedding in pproc.postprocess(embedding_batch):
-                emb.extend(embedding.tolist())
+            # emb = []
+            # for embedding in embedding_batch:
+            #     emb.append(embedding.tolist())
+            emb = np.mean(embedding_batch, axis=0).tolist()
+
         label_tsv.append([ontology_lookup[label]['name']])
         audio_tsv.append([f'{label}/{filename}'])
         emb_tsv.append(emb)
