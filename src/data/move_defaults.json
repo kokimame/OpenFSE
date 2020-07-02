@@ -12,7 +12,7 @@
   "lr_milestones": null,
   "test_per_epoch": 10,
   "norm_dist": true,
-  "mining_strategy": 2,
+  "mining_strategy": 'hard',
   "save_model": true,
   "mAP@k": null,
 

@@ -19,6 +19,8 @@ from models.model_vgg_dropout import VGGModelDropout
 from models.model_move_nt import MOVEModelNT
 from model_evaluate import test
 from model_losses import triplet_loss_mining
+from margin_adapter import MarginAdapter
+
 from utils.utils import average_precision
 from utils.utils import import_dataset_from_pt
 from utils.utils import triplet_mining_collate
@@ -26,7 +28,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 
-def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True, mining_strategy=2):
+def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True, mining_strategy=2, margin_adapter=None):
     """
     Training loop for one epoch
     :param model: model to be trained
@@ -55,7 +57,8 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True,
         # calculating the loss value of the mini-batch
         loss, pos_avg, neg_avg, msr, hard_indices = triplet_loss_mining(
             output, labels, model.fin_emb_size,
-            margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist, indices=indices
+            margin=margin, mining_strategy=mining_strategy,
+            norm_dist=norm_dist, indices=indices, margin_adapter=margin_adapter
         )
         train_loader.save_hard_indices(hard_indices)
 
@@ -82,7 +85,7 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True,
     return train_loss, train_pos, train_neg, train_msr
 
 
-def validate_triplet_mining(model, val_loader, margin, norm_dist=True, mining_strategy=2):
+def validate_triplet_mining(model, val_loader, margin, norm_dist=True, mining_strategy='hard'):
     """
     validation loop for one epoch
     :param model: model to be used for validation
@@ -183,6 +186,8 @@ def train(defaults, save_name, dataset_name):
     val_loader = DataLoader(val_set, batch_size=d['num_of_labels'], shuffle=True,
                             collate_fn=triplet_mining_collate, drop_last=True)
 
+    margin_adapter = MarginAdapter([train_labels, val_labels], description_file='data/AudioSet_lookup.json')
+
     # Validation dataset to compute mAP
     val_mAP_set = DatasetFull(val_data, val_labels)
     val_mAP_loader = DataLoader(val_mAP_set, batch_size=8, shuffle=False)
@@ -206,11 +211,12 @@ def train(defaults, save_name, dataset_name):
     for epoch in range(d['num_of_epochs']):
         time.sleep(0.01)
         train_loss, train_pos, train_neg, train_msr = train_triplet_mining(model=model,
-                                          optimizer=optimizer,
-                                          train_loader=train_loader,
-                                          margin=d['margin'],
-                                          norm_dist=d['norm_dist'],
-                                          mining_strategy=d['mining_strategy'])
+                                                                           optimizer=optimizer,
+                                                                           train_loader=train_loader,
+                                                                           margin=d['margin'],
+                                                                           norm_dist=d['norm_dist'],
+                                                                           mining_strategy=d['mining_strategy'],
+                                                                           margin_adapter=margin_adapter)
 
         val_loss, val_pos, val_neg, val_msr = validate_triplet_mining(model=model,
                                                                       val_loader=val_loader,

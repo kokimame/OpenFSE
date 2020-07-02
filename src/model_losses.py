@@ -4,7 +4,8 @@ import torch.nn.functional as F
 from utils.utils import pairwise_distance_matrix
 
 
-def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy=2, norm_dist=True, indices=None):
+def triplet_loss_mining(res_1, labels, embedding_size,
+                        margin=1, mining_strategy='hard', norm_dist=True, indices=None, margin_adapter=None):
     """
     Online mining function for selecting the triplets
     :param res_1: embeddings in the mini-batch
@@ -18,8 +19,10 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
 
     # Creating positive and negative masks for online mining
     i_labels = []
+    extended_labels = []
     for i, l in enumerate(labels):
         i_labels += [i] * 4
+        extended_labels += [l] * 4
 
     i_labels = torch.Tensor(i_labels).view(-1, 1)
 
@@ -38,12 +41,16 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
     if norm_dist:
         dist_all /= embedding_size
 
-    if mining_strategy == 0:  # Random mining
-        dists_pos, dists_neg = triplet_mining_random(dist_all, mask_pos, mask_neg)
-    elif mining_strategy == 1:  # Semi-hard mining
-        dists_pos, dists_neg = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
-    else:  # Hard mining
-        dists_pos, dists_neg = triplet_mining_hard(dist_all, mask_pos, mask_neg) \
+    if mining_strategy == 'random':  # Random mining
+        dists_pos, dists_neg, sel_pos, sel_neg = triplet_mining_random(dist_all, mask_pos, mask_neg)
+    elif mining_strategy == 'semihard':  # Semi-hard mining
+        dists_pos, dists_neg, sel_pos, sel_neg = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
+    else:  # Hard mining by default
+        dists_pos, dists_neg, sel_pos, sel_neg = triplet_mining_hard(dist_all, mask_pos, mask_neg)
+
+    # Adapt margin based on the selected labels
+    if margin_adapter:
+        margin_adapter.adapt(margin, extended_labels, sel_pos, sel_neg)
 
     hard_indices = []
     if indices is not None:
@@ -111,7 +118,7 @@ def triplet_mining_hard(dist_all, mask_pos, mask_neg):
     _, sel_neg = torch.min(dist_all + mask_neg.double(), 1)
     dists_neg = torch.gather(dist_all, 1, sel_neg.view(-1, 1))
 
-    return dists_pos, dists_neg
+    return dists_pos, dists_neg, sel_pos, sel_neg
 
 
 def triplet_mining_random(dist_all, mask_pos, mask_neg):
@@ -130,7 +137,7 @@ def triplet_mining_random(dist_all, mask_pos, mask_neg):
     _, sel_neg = torch.max(mask_neg.double() + torch.rand_like(dist_all), 1)
     dists_neg = torch.gather(dist_all, 1, sel_neg.view(-1, 1))
 
-    return dists_pos, dists_neg
+    return dists_pos, dists_neg, sel_pos, sel_neg
 
 
 def triplet_mining_semihard(dist_all, mask_pos, mask_neg):
@@ -150,5 +157,5 @@ def triplet_mining_semihard(dist_all, mask_pos, mask_neg):
                            torch.rand_like(dist_all), 1)
     dists_neg = torch.gather(dist_all, 1, sel_neg.view(-1, 1))
 
-    return dists_pos, dists_neg
+    return dists_pos, dists_neg, sel_pos, sel_neg
 
