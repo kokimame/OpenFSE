@@ -61,13 +61,16 @@ class DatasetFixed(Dataset):
             idx1, idx2 = np.random.choice(self.label_to_indices[label], 2, replace=False)
             item1, item2 = self.data[idx1], self.data[idx2]
             item3, item4 = self.data[idx1], self.data[idx2]
+            indices = [idx1, idx2]
         elif self.label_to_indices[label].size == 3:  # if the clique size is 3, choose one of the sounds twice
             idx1, idx2, idx3 = np.random.choice(self.label_to_indices[label], 3, replace=False)
             idx4 = np.random.choice(self.label_to_indices[label], 1, replace=False)[0]
             item1, item2, item3, item4 = self.data[idx1], self.data[idx2], self.data[idx3], self.data[idx4]
+            indices = [idx1, idx2, idx3]
         else:  # if the clique size is larger than or equal to 4, choose 4 sounds randomly
             idx1, idx2, idx3, idx4 = np.random.choice(self.label_to_indices[label], 4, replace=False)
             item1, item2, item3, item4 = self.data[idx1], self.data[idx2], self.data[idx3], self.data[idx4]
+            indices = [idx1, idx2, idx3, idx4]
         items_i = [item1, item2, item3, item4]  # list for storing selected sounds
 
         items = []
@@ -86,7 +89,7 @@ class DatasetFixed(Dataset):
             else:  # if the sound is shorter than the required width, zero-pad the end
                 items.append(torch.cat((item, torch.zeros([1, self.h, self.w - item.shape[2]]).double()), 2))
 
-        return torch.stack(items, 0), label
+        return torch.stack(items, 0), (label, indices)
 
     def __len__(self):
         """

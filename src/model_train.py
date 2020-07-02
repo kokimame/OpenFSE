@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from dataset.dataset_fixed_size import DatasetFixed
 from dataset.dataset_full_size import DatasetFull
+from dataset.train_loader import TrainLoader
 from models.model_move import MOVEModel
 from models.model_vgg import VGGModel
 from models.model_vgg_v2 import VGGModelV2
@@ -43,13 +44,20 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True,
     msr_log = []
 
     for batch in tqdm(train_loader, desc='Training the model .....'):  # training loop
-        items, labels = batch
+        items, item_info = batch
+        labels, indices = [], []
+        for label, indice in item_info:
+            labels.append(label)
+            indices.extend(indice)
         if torch.cuda.is_available():
             items = items.cuda()
         output = model(items)  # obtaining the embeddings of each song in the mini-batch
         # calculating the loss value of the mini-batch
-        loss, pos_avg, neg_avg, msr = triplet_loss_mining(output, labels, model.fin_emb_size,
-                                        margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
+        loss, pos_avg, neg_avg, msr, hard_indices = triplet_loss_mining(
+            output, labels, model.fin_emb_size,
+            margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist, indices=indices
+        )
+        train_loader.save_hard_indices(hard_indices)
 
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
@@ -100,7 +108,7 @@ def validate_triplet_mining(model, val_loader, margin, norm_dist=True, mining_st
             res_1 = model(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss, pos_avg, neg_avg, msr = triplet_loss_mining(res_1, labels, model.fin_emb_size,
+            loss, pos_avg, neg_avg, msr, _ = triplet_loss_mining(res_1, labels, model.fin_emb_size,
                                                               margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
@@ -137,7 +145,7 @@ def train(defaults, save_name, dataset_name):
 
     # initializing the model
     model = VGGModelDropout(emb_size=d['emb_size'])
-    # model.load_state_dict(torch.load('saved_models/unique5_12k.pt'))
+    # model.load_state_dict(torch.load('saved_models/unique5_12k_semihard_margin2_lr001.pt'))
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
@@ -168,7 +176,7 @@ def train(defaults, save_name, dataset_name):
     # to check mean average precision on the full sounds,
     # we need to define another dataset object and data loader for it
     train_set = DatasetFixed(train_data, train_labels, h=d['input_height'], w=d['input_width'])# , data_aug=d['data_aug'])
-    train_loader = DataLoader(train_set, batch_size=d['num_of_labels'], shuffle=True,
+    train_loader = TrainLoader(train_set, batch_size=d['num_of_labels'], shuffle=True,
                               collate_fn=triplet_mining_collate, drop_last=True)
 
     val_set = DatasetFixed(val_data, val_labels, h=d['input_height'], w=d['input_width'])#, data_aug=d['data_aug'])
@@ -225,7 +233,8 @@ def train(defaults, save_name, dataset_name):
         writer.add_scalar('Val/Loss', val_loss, epoch)
         writer.add_scalars('Val/Distance', {'pos': val_pos, 'neg': val_neg}, epoch)
         writer.add_scalar('Val/Margin Satisfied (%)', val_msr * 100, epoch)
-        print(f'Train result: Loss({train_loss:.2f})\n'
+        print(f'Epoch: {epoch}\n'
+              f'Train result: Loss({train_loss:.2f})\n'
               f'Avg. Dist.(P:{train_pos:.2f}|N:{train_neg:.2f}|P-N:{train_pos - train_neg:.2f})\n'
               f'Margin Satisfied (%)({int(train_msr * 100)})')
         # Calculation performance metrics

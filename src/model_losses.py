@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from utils.utils import pairwise_distance_matrix
 
 
-def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy=2, norm_dist=True):
+def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy=2, norm_dist=True, indices=None):
     """
     Online mining function for selecting the triplets
     :param res_1: embeddings in the mini-batch
@@ -43,7 +43,11 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
     elif mining_strategy == 1:  # Semi-hard mining
         dists_pos, dists_neg = triplet_mining_semihard(dist_all, mask_pos, mask_neg)
     else:  # Hard mining
-        dists_pos, dists_neg = triplet_mining_hard(dist_all, mask_pos, mask_neg)
+        dists_pos, dists_neg = triplet_mining_hard(dist_all, mask_pos, mask_neg) \
+
+    hard_indices = []
+    if indices is not None:
+        hard_indices = find_hard_indices(dist_all, indices, mask_pos, mask_neg)
 
     margin_satisfied = 0
     # Loss = max(Distance_anc_pos - Distance_anc_neg + Margin, 0)
@@ -58,7 +62,30 @@ def triplet_loss_mining(res_1, labels, embedding_size, margin=1, mining_strategy
 
     margin_satisfied_rate = margin_satisfied / len(dists_pos)
 
-    return loss.mean(), dists_pos.mean(), dists_neg.mean(), margin_satisfied_rate
+    return loss.mean(), dists_pos.mean(), dists_neg.mean(), margin_satisfied_rate, hard_indices
+
+
+def find_hard_indices(dist_all, indices, mask_pos, mask_neg):
+    """
+    Find the indices of the examples which are hardest in a batch
+    :param dist_all:
+    :param indices:
+    :return:
+    """
+    if torch.cuda.is_available():
+        device = 'cuda:0'
+    else:
+        device = 'cpu'
+    # Selecting the positive elements of triplets
+    _, sel_pos = torch.max(dist_all * mask_pos.double(), 1)
+
+    # Modifying the negative mask for hard mining
+    mask_neg = torch.where(mask_neg == 0, torch.tensor(float('inf'), device=device), torch.tensor(1., device=device))
+    # Selecting the negative elements of triplets
+    _, sel_neg = torch.min(dist_all + mask_neg.double(), 1)
+    hard_sel = torch.cat((sel_pos.view(-1, 1), sel_neg.view(-1, 1)), dim=1).tolist()
+    hard_indices = [(indices[pos], indices[neg]) for pos, neg in hard_sel]
+    return hard_indices
 
 
 def triplet_mining_hard(dist_all, mask_pos, mask_neg):
