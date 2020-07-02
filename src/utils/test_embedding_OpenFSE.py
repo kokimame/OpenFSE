@@ -14,10 +14,10 @@ from models.model_vgg_dropout import VGGModelDropout
 from src.utils import generate_spec_v3
 
 
-SAVED_MODEL = '../saved_models/unique5_12k.pt'
+SAVED_MODEL = '../saved_models/model_tag_top100_2020-06-22_01:14:07.475314.pt'
 ONTROLOGY = '../data/ontology.json'
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-OUTPUTDIR = f'{ROOTDIR}/unique5'
+OUTPUTDIR = f'{ROOTDIR}/tag_top100'
 
 AUDIO_CHUNKS = f'{OUTPUTDIR}/audio'
 

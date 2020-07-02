@@ -9,9 +9,9 @@ import csv
 from tqdm import tqdm
 
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-OUTPUTDIR = f'{ROOTDIR}/projector'
+OUTPUTDIR = f'{ROOTDIR}/unique5'
 AUDIO_CHUNKS = f'{OUTPUTDIR}/audio'
-ONTROLOGY = '../../json/ontology.json'
+ONTROLOGY = '../data/ontology.json'
 
 with open(ONTROLOGY, 'r') as f:
     label_json = json.load(f)
