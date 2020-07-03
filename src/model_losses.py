@@ -19,10 +19,14 @@ def triplet_loss_mining(res_1, labels, embedding_size,
 
     # Creating positive and negative masks for online mining
     i_labels = []
-    extended_labels = []
+    column_labels = []
     for i, l in enumerate(labels):
+        if l in column_labels:
+            duplicated_label_index = column_labels.index(l)
+            duplicated_index = i_labels[duplicated_label_index]
+            i = duplicated_index
         i_labels += [i] * 4
-        extended_labels += [l] * 4
+        column_labels += [l] * 4
 
     i_labels = torch.Tensor(i_labels).view(-1, 1)
 
@@ -50,7 +54,10 @@ def triplet_loss_mining(res_1, labels, embedding_size,
 
     # Adapt margin based on the selected labels
     if margin_adapter:
-        margin_adapter.adapt(margin, extended_labels, sel_pos, sel_neg)
+        margin = margin_adapter.adapt(margin, column_labels, sel_pos, sel_neg)
+    else:
+        margin_list = [[margin] for _ in range(dists_pos.size(0))]
+        margin = torch.tensor(margin_list)
 
     hard_indices = []
     if indices is not None:
@@ -63,8 +70,8 @@ def triplet_loss_mining(res_1, labels, embedding_size,
     # loss = F.relu(torch.where(dists > 1, dists ** 2, dists) + margin)
 
     loss = F.relu(dists_pos - dists_neg + margin)  # calculating triplet loss
-    for pos, neg in zip(dists_pos, dists_neg):
-        if pos - neg + margin  <= 0:
+    for pos, neg, m in zip(dists_pos, dists_neg, margin):
+        if pos - neg + m  <= 0:
             margin_satisfied += 1
 
     margin_satisfied_rate = margin_satisfied / len(dists_pos)

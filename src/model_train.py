@@ -28,7 +28,8 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 
-def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True, mining_strategy=2, margin_adapter=None):
+def train_triplet_mining(model, optimizer, train_loader, margin,
+                         norm_dist=True, mining_strategy='hard', margin_adapter=None):
     """
     Training loop for one epoch
     :param model: model to be trained
@@ -85,7 +86,8 @@ def train_triplet_mining(model, optimizer, train_loader, margin, norm_dist=True,
     return train_loss, train_pos, train_neg, train_msr
 
 
-def validate_triplet_mining(model, val_loader, margin, norm_dist=True, mining_strategy='hard'):
+def validate_triplet_mining(model, val_loader, margin,
+                            norm_dist=True, mining_strategy='hard', margin_adapter=None):
     """
     validation loop for one epoch
     :param model: model to be used for validation
@@ -222,7 +224,8 @@ def train(defaults, save_name, dataset_name):
                                                                       val_loader=val_loader,
                                                                       margin=d['margin'],
                                                                       norm_dist=d['norm_dist'],
-                                                                      mining_strategy=d['mining_strategy'])
+                                                                      mining_strategy=d['mining_strategy'],
+                                                                      margin_adapter=margin_adapter)
 
         # saving model if needed
         if d['save_model']:
