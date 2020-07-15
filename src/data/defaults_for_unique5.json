@@ -7,7 +7,7 @@
   "num_of_epochs": 8000,
   "learning_rate": 0.01,
   "margin": 2,
-  "dataset_root": "/home/kmametani/Master_Files",
+  "dataset_root": "/media/kokimame/Work_A_1TB/Project/Master_Files",
   "run_type": "train",
   "lr_milestones": null,
   "test_per_epoch": 10,
