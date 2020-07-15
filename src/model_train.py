@@ -189,10 +189,12 @@ def train(defaults, save_name, dataset_name):
                             collate_fn=triplet_mining_collate, drop_last=True)
 
     if d["adaptive_margin"]:
-        margin_adapter = MarginAdapter([train_labels, val_labels], description_file='data/AudioSet_lookup.json')
+        margin_adapter = MarginAdapter([train_labels, val_labels],
+                                       base_margin=d['margin'], description_file='data/AudioSet_lookup.json')
     else:
         margin_adapter = None
     print(f'Adaptive margin: {"on" if margin_adapter else "off"}')
+    print(f'Mining strategy: {d["mining_strategy"]}')
 
     # Validation dataset to compute mAP
     val_mAP_set = DatasetFull(val_data, val_labels)

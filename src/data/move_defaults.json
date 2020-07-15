@@ -4,7 +4,7 @@
   "num_of_labels": 5,
   "emb_size": 512,
   "chunks": 1,
-  "num_of_epochs": 24000,
+  "num_of_epochs": 8000,
   "learning_rate": 0.01,
   "margin": 2,
   "dataset_root": "/media/kokimame/Work_A_1TB/Project/Master_Files",
