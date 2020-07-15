@@ -8,12 +8,18 @@ from itertools import permutations
 
 class MarginAdapter:
     def __init__(self, label_list, description_file=None):
+        if torch.cuda.is_available():
+            self.device = 'cuda:0'
+        else:
+            self.device = 'cpu'
+
+        
         nlp = spacy.load('en_core_web_md')
 
         description_lookup = {}
         if description_file:
-            assert description_file.endswith('.json')
-            assert os.path.exists(description_file)
+            assert description_file.endswith('.json'), description_file
+            assert os.path.exists(description_file), description_file
             with open(description_file, 'r') as f:
                 description_lookup = json.load(f)
 
@@ -40,7 +46,7 @@ class MarginAdapter:
         self.average_dist = np.mean(list(self.pairwise_dists.values()))
 
 
-    def adapt(self, base_margin, labels, sel_pos, sel_neg):
+    def adapt(self, base_margin, labels, sel_pos, sel_neg):            
         margin_list = []
         for pos, neg in zip(sel_pos, sel_neg):
             pos_label = labels[pos]
@@ -55,5 +61,5 @@ class MarginAdapter:
             except:
                 margin_list.append([0])
 
-        adapted_margin = torch.tensor(margin_list)
+        adapted_margin = torch.tensor(margin_list).to(self.device)
         return adapted_margin

@@ -59,6 +59,7 @@ def triplet_loss_mining(res_1, labels, embedding_size,
         margin_list = [[margin] for _ in range(dists_pos.size(0))]
         margin = torch.tensor(margin_list)
 
+
     hard_indices = []
     if indices is not None:
         hard_indices = find_hard_indices(dist_all, indices, mask_pos, mask_neg)

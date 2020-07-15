@@ -171,7 +171,7 @@ def train(defaults, save_name, dataset_name):
         train_path = train_path
     train_data, train_labels = import_dataset_from_pt('{}'.format(train_path), chunks=d['chunks'])
 
-    print('Train data has been loaded!')
+    print(f'Train data has been loaded! Length: {len(train_data)}')
 
     val_data, val_labels = import_dataset_from_pt('{}'.format(val_path), chunks=1)
     print('Validation data has been loaded!')
