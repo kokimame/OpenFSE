@@ -57,8 +57,7 @@ def triplet_loss_mining(res_1, labels, embedding_size,
         margin = margin_adapter.adapt(column_labels, sel_pos, sel_neg)
     else:
         margin_list = [[margin] for _ in range(dists_pos.size(0))]
-        margin = torch.tensor(margin_list)
-
+        margin = torch.tensor(margin_list).cuda()
 
     hard_indices = []
     if indices is not None:
