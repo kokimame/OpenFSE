@@ -73,17 +73,18 @@ class MarginAdapter:
             else:
                 margin_list.append([self.base_margin - 1])
 
-        adapted_margin = torch.tensor(margin_list)
+        adapted_margin = torch.tensor(margin_list).to(self.device)
         return adapted_margin
 
     def adapt2(self, labels, sel_pos, sel_neg):
+        # Adaptive margin implementation based on
+        # "A weakly supervised adaptive triplet loss for deep metric learning"
         margin_list = []
         for i_pos, i_neg in zip(sel_pos, sel_neg):
             pos_label = labels[i_pos]
             neg_label = labels[i_neg]
             dist = self.dist_semantic[(pos_label, neg_label)]
             margin_list.append([self.base_margin + dist])
-
 
         adapted_margin = torch.tensor(margin_list).to(self.device)
         return adapted_margin

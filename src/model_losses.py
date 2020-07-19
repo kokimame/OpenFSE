@@ -54,7 +54,7 @@ def triplet_loss_mining(res_1, labels, embedding_size,
 
     # Adapt margin based on the selected labels
     if margin_adapter:
-        margin = margin_adapter.adapt(column_labels, sel_pos, sel_neg)
+        margin = margin_adapter.adapt2(column_labels, sel_pos, sel_neg)
     else:
         margin_list = [[margin] for _ in range(dists_pos.size(0))]
         margin = torch.tensor(margin_list).cuda()
