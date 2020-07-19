@@ -90,6 +90,5 @@ class MarginAdapter:
             neg_label = labels[i_neg]
             semantic_similarity = self.d_semantic[(pos_label, neg_label)]
             margin_list.append([self.base_margin + semantic_similarity])
-        print(f'Margin range: [{min(margin_list)}, {max(margin_list)}]')
         adapted_margin = torch.tensor(margin_list).to(self.device)
         return adapted_margin
