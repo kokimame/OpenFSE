@@ -7,7 +7,11 @@ from tqdm import tqdm
 from itertools import permutations
 
 class MarginAdapter:
-    
+
+    def l2norm(self, vector):
+        return vector / np.linalg.norm(vector)
+
+
     def __init__(self, label_list, base_margin, description_file=None):
         if torch.cuda.is_available():
             self.device = 'cuda:0'
@@ -29,14 +33,14 @@ class MarginAdapter:
 
         # Similar to pairwise distance
         # Either of them will be discarded
-        self.dist_semantic = {}
+        self.d_semantic = {}
         for l1, l2 in permutations(self.label_to_vector.keys(), 2):
             dist = np.linalg.norm(
                 self.label_to_vector[l1] - self.label_to_vector[l2]
             )
-            assert (l1, l2) not in self.dist_semantic
-            self.dist_semantic[(l1, l2)] = dist / 4 - self.base_margin
-
+            assert (l1, l2) not in self.d_semantic
+            # d_semantic (t_a, t_n) = || g(t_a) - g(t_n) || ^ 2 / (4 - beta)
+            self.d_semantic[(l1, l2)] = dist ** 2 / (4 - self.base_margin)
 
     def initialize_lookup(self, label_list, description_file):
         nlp = spacy.load('en_core_web_md')
@@ -57,9 +61,10 @@ class MarginAdapter:
                 description = label
             if label not in self.label_to_vector:
                 vectors = np.asarray([word.vector for word in nlp(description)])
-                mean_vector = np.mean(vectors, axis=0)
-                self.label_to_vector[label] = mean_vector
+                sum_vector = np.sum(vectors, axis=0)
 
+                # g(tag) = sum(word vectors) / || sum(word vectors) ||
+                self.label_to_vector[label] = self.l2norm(sum_vector)
 
     def adapt(self, labels, sel_pos, sel_neg):
         margin_list = []
@@ -83,8 +88,8 @@ class MarginAdapter:
         for i_pos, i_neg in zip(sel_pos, sel_neg):
             pos_label = labels[i_pos]
             neg_label = labels[i_neg]
-            dist = self.dist_semantic[(pos_label, neg_label)]
-            margin_list.append([self.base_margin + dist])
-
+            semantic_similarity = self.d_semantic[(pos_label, neg_label)]
+            margin_list.append([self.base_margin + semantic_similarity])
+        print(f'Margin range: [{min(margin_list)}, {max(margin_list)}]')
         adapted_margin = torch.tensor(margin_list).to(self.device)
         return adapted_margin

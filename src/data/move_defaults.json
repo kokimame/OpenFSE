@@ -6,7 +6,7 @@
   "chunks": 1,
   "num_of_epochs": 8000,
   "learning_rate": 0.01,
-  "margin": 2,
+  "margin": 0.1,
   "dataset_root": "",
   "run_type": "train",
   "lr_milestones": null,
