@@ -16,6 +16,7 @@
   "adaptive_margin": true,
   "save_model": true,
   "mAP@k": null,
+  "use_pretrained": "saved_models/model_tag_top_no_silence_100_2020-07-25_10:49:17.702028.pt",
 
   "data_aug": 0,
   "random_seed": 42,
