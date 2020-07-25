@@ -150,7 +150,8 @@ def train(defaults, save_name, dataset_name):
 
     # initializing the model
     model = VGGModelDropout(emb_size=d['emb_size'])
-    # model.load_state_dict(torch.load('saved_models/unique5_12k_semihard_margin2_lr001.pt'))
+    if d['use_pretrained']:
+        model.load_state_dict(torch.load(d['use_pretrained']))
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
