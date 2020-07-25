@@ -146,8 +146,6 @@ def train(defaults, save_name, dataset_name):
     if not os.path.exists('saved_models/'):
         os.mkdir('saved_models/')
 
-    writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
-
     # initializing the model
     model = VGGModelDropout(emb_size=d['emb_size'])
     if d['use_pretrained']:
@@ -157,7 +155,12 @@ def train(defaults, save_name, dataset_name):
         yyyy, mm, dd = yyyymmdd.split('-')
         hour, minute, secDot = hhmmssDot.split(':')
         sec = secDot.split('.')[0]
-        writer = SummaryWriter(f'runs/{mm}-{dd}_{hour}-{minute}-{sec}-{dataset_name}')
+        run_file = f'runs/{mm}-{dd}_{hour}-{minute}-{sec}-{dataset_name}'
+        writer = SummaryWriter(run_file)
+        print(f'Save name updated to {save_name}')
+        print(f'Run file updated to {run_file}')
+    else:
+        writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
 
 
     # sending the model to gpu, if available
