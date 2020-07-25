@@ -26,7 +26,7 @@ from utils.utils import import_dataset_from_pt
 from utils.utils import triplet_mining_collate
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-
+from pathlib import Path
 
 def train_triplet_mining(model, optimizer, train_loader, margin,
                          norm_dist=True, mining_strategy='hard', margin_adapter=None):
@@ -139,8 +139,6 @@ def train(defaults, save_name, dataset_name):
     train_path = os.path.join(d['dataset_root'], dataset_name + '_train')
     val_path = os.path.join(d['dataset_root'], dataset_name + '_val.pt')
 
-    writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
-
     # initiating the necessary random seeds
     np.random.seed(d['random_seed'])
     torch.manual_seed(d['random_seed'])
@@ -148,10 +146,19 @@ def train(defaults, save_name, dataset_name):
     if not os.path.exists('saved_models/'):
         os.mkdir('saved_models/')
 
+    writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
+
     # initializing the model
     model = VGGModelDropout(emb_size=d['emb_size'])
     if d['use_pretrained']:
         model.load_state_dict(torch.load(d['use_pretrained']))
+        save_name = Path(d['use_pretrained']).stem.replace('model_', '')
+        _, yyyymmdd, hhmmssDot = save_name.rsplit('_', 2)
+        yyyy, mm, dd = yyyymmdd.split('-')
+        hour, minute, secDot = hhmmssDot.split(':')
+        sec = secDot.split('.')[0]
+        writer = SummaryWriter(f'runs/{mm}-{dd}_{hour}-{minute}-{sec}-{dataset_name}')
+
 
     # sending the model to gpu, if available
     if torch.cuda.is_available():
