@@ -6,12 +6,12 @@ from pathlib import Path
 from collections import OrderedDict
 from tqdm import tqdm
 
-USE_TOPK_LABELS = 100
+USE_TOPK_LABELS = 250
 TRAIN_SPLIT = 0.8
 CHUNK_WIDTH = 128
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-DATADIR = f'{ROOTDIR}/spec_tagged_mcuts'
-DATASET_NAME = f'tag_top{USE_TOPK_LABELS}'
+DATADIR = f'{ROOTDIR}/spec_no_silence'
+DATASET_NAME = f'tag_top_no_silence_{USE_TOPK_LABELS}'
 
 paths = glob.glob(os.path.join(DATADIR, '*', '*.npy'))
 # Looking up paths by the label to which the sound belongs

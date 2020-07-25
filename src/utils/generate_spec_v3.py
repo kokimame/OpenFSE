@@ -11,8 +11,9 @@ from mutagen.mp3 import MP3
 
 # Suppress soundfile warning on loading MP3
 warnings.simplefilter('ignore')
-DOWNLOAD_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/audio_200k'
-SPEC_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/spec_200k'
+DOWNLOAD_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/audio_audioset'
+SPEC_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/spec_no_silence'
+MAX_SOUNDS_PER_LABEL = 50
 
 # Check if the directories exist
 if not os.path.exists(SPEC_DIR):
@@ -47,17 +48,22 @@ def compute_spectrogram(path, sr=SAMPLING_FREQUENCY, n_mels=128):
     spec = (melspec + 80.0) / 80.0
     return spec
 
-def spec_to_chunk(path):
+def spec_to_chunks(path, remove_silence=False):
     spec = compute_spectrogram(path)
+    spec_length = spec.shape[1]
     output_chunks = []
-    for i in range(0, len(spec) // CHUNK_WIDTH):
+    # print(f'Spec // chunk width = {spec_length} // {CHUNK_WIDTH} = {spec_length // CHUNK_WIDTH}')
+    for i in range(0, spec_length // CHUNK_WIDTH):
         chunk = spec[:, i * CHUNK_WIDTH : (i + 1) * CHUNK_WIDTH]
         if chunk.shape[1] != CHUNK_WIDTH:
             continue
+        if not has_enough_energy(chunk, threshold=2500):
+            continue
+
         output_chunks.append(chunk)
     return output_chunks
 
-def save_chucks(chunks, original_path):
+def save_chucks(original_path, chunks):
     label = Path(Path(original_path).parent).stem
 
     if not os.path.exists(f'{SPEC_DIR}/{label}/'):
@@ -68,11 +74,25 @@ def save_chucks(chunks, original_path):
         chunk_path = f'{SPEC_DIR}/{label}/{existing + i + 1:06d}.npy'
         np.save(chunk_path, chunk)
 
+    return existing + len(chunks)
+
+def has_enough_energy(spec, threshold=2500):
+    return get_spec_energy(spec) > threshold
+
+def get_spec_energy(spec):
+    return np.sum(spec ** 2)
+
 def visualize_chunks(path, chunks):
-    for i, chunk in enumerate(chunks):
-        plt.subplot(2, 3, i + 1)
+    plt.figure(figsize=(6, 8))
+    plt.tight_layout()
+    print(f'Path: {path} | # of Chunks : {len(chunks)}')
+
+    for i, chunk in enumerate(chunks[:16]):
+        plt.subplot(4, 4, i + 1)
         plt.imshow(chunk)
-    plt.xlabel(path)
+        plt.xlabel(f'{get_spec_energy(chunk):.2f}')
+
+    # plt.title(path, y=-1)
     plt.show()
 
 def audio_to_chunk(path, sr=SAMPLING_FREQUENCY):
@@ -96,7 +116,7 @@ def projection_setup(path, audio_dir, spec_dir):
         os.makedirs(audio_dir)
     if not os.path.exists(spec_dir):
         os.makedirs(spec_dir)
-    spec_chunks = spec_to_chunk(path)
+    spec_chunks = spec_to_chunks(path)
     audio_chunks = audio_to_chunk(path)
     audio_nums = []
 
@@ -113,8 +133,13 @@ def projection_setup(path, audio_dir, spec_dir):
     return spec_chunks, audio_nums
 
 if __name__ == '__main__':
-    audio_paths = glob.glob(f'{DOWNLOAD_DIR}/*/*.mp3')
+    audio_dirs = glob.glob(f'{DOWNLOAD_DIR}/*')
+    for audio_dir in tqdm(audio_dirs):
+        for path in glob.glob(f'{audio_dir}/*.mp3'):
+            chunks = spec_to_chunks(path, remove_silence=True)
 
-    for path in tqdm(audio_paths):
-        chunks = spec_to_chunk(path)
-        save_chucks(chunks, path)
+            file_count = save_chucks(path, chunks)
+
+            if file_count > MAX_SOUNDS_PER_LABEL:
+                break
+            # visualize_chunks(path, chunks)
