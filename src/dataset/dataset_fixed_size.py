@@ -20,7 +20,7 @@ class DatasetFixed(Dataset):
         :param w: width of features (number of frames in the temporal dimension)
         :param data_aug: whether to apply data augmentation to each sound (1 or 0)
         """
-        self.data = data  # spectrogram features
+        self.data = [d.float() for d in data] # spectrogram features
         self.labels = np.array(labels)  # labels of the features
 
         self.seed = 42  # random seed
@@ -77,7 +77,7 @@ class DatasetFixed(Dataset):
                     temp_item = item[:, :, start:start + self.w]
                     items.append(temp_item)
             else:  # if the sound is shorter than the required width, zero-pad the end
-                items.append(torch.cat((item, torch.zeros([1, self.h, self.w - item.shape[2]]).double()), 2))
+                items.append(torch.cat((item, torch.zeros([1, self.h, self.w - item.shape[2]])), 2))
 
         return torch.stack(items, 0), (label, indices)
 

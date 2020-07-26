@@ -82,7 +82,6 @@ class VGGModelDropout(nn.Module):
         self.lin_bn = nn.BatchNorm1d(emb_size, affine=False)
 
         self.lin1 = nn.Linear(in_features=4*self.num_of_channels, out_features=emb_size, bias=False)
-        self.double()
 
     def forward(self, data):
         """

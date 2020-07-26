@@ -16,7 +16,7 @@ class DatasetFull(Dataset):
         :param h: height of pcp features (number of bins, e.g. 12 or 23)
         :param w: width of pcp features (number of frames in the temporal dimension)
         """
-        self.data = data  # spectrogram feature
+        self.data = [d.float() for d in data]  # spectrogram feature
         self.labels = np.array(labels)  # labels of the pcp features
 
         self.labels_set = list(self.labels)  # the set of labels
@@ -33,7 +33,7 @@ class DatasetFull(Dataset):
 
         item = self.data[index]
 
-        return item.double()
+        return item
 
     def __len__(self):
         """
