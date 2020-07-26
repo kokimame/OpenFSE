@@ -7,7 +7,7 @@ from model_evaluate import evaluate
 from model_train import train
 
 if __name__:
-    with open('data/move_defaults.json') as f:
+    with open('data/model_defaults.json') as f:
         defaults = json.load(f)
         if defaults['dataset_root'] == '':
             if 'kmametani' in os.environ['HOME']:
