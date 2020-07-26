@@ -7,12 +7,13 @@ import soundfile as sf
 import matplotlib.pyplot as plt
 from pathlib import Path
 from tqdm import tqdm
+from tqdm import trange
 from mutagen.mp3 import MP3
 
 # Suppress soundfile warning on loading MP3
 warnings.simplefilter('ignore')
 DOWNLOAD_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/audio_200k'
-SPEC_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/spec_200k'
+SPEC_DIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/spec_200k_2'
 MAX_CHUNKS_PER_LABEL = 50
 
 # Check if the directories exist
@@ -133,10 +134,17 @@ def projection_setup(path, audio_dir, spec_dir):
     return spec_chunks, audio_nums
 
 if __name__ == '__main__':
-    for path in tqdm(glob.glob(f'{DOWNLOAD_DIR}/*.mp3')):
+    audio_files = glob.glob(f'{DOWNLOAD_DIR}/*.mp3')
+    pbar = trange(len(audio_files))
+    error_count = 0
+
+    for i in pbar:
+        path = audio_files[i]
         try:
             chunks = spec_to_chunks(path, remove_silence=True)
-            file_count = save_chucks(path, chunks)
+            save_chucks(path, chunks)
+            pbar.set_description(f'{len(chunks)} added')
             # visualize_chunks(path, chunks)
         except Exception as e:
-            print(f'Error: {e}')
+            error_count += 1
+            print(f'Error #{error_count}: {e}')
