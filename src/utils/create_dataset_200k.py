@@ -6,18 +6,17 @@ from pathlib import Path
 from collections import OrderedDict
 from tqdm import tqdm
 
-USE_TOPK_LABELS = 100
 TRAIN_SPLIT = 0.8
 CHUNK_WIDTH = 128
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-DATADIR = f'{ROOTDIR}/spec_no_silence'
-DATASET_NAME = f'tag_top_no_silence_{USE_TOPK_LABELS}'
+DATADIR = f'{ROOTDIR}/spec_200k'
+DATASET_NAME = f'mix_200k'
 
-paths = glob.glob(os.path.join(DATADIR, '*', '*.npy'))
+paths = glob.glob(os.path.join(DATADIR, '*.npy'))
 # Looking up paths by the label to which the sound belongs
 path_lookup = {}
 for path in paths:
-    label = Path(Path(path).parent).stem
+    label = Path(path).stem
     paths = path_lookup.get(label, [])
     paths.append(path)
     path_lookup[label] = paths
@@ -26,7 +25,7 @@ path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1])))
 # Setup dataset
 train_data, train_labels = [], []
 val_data, val_labels = [], []
-data_list = list(path_lookup.items())[:USE_TOPK_LABELS]
+data_list = list(path_lookup.items())
 min_sounds_per_label = min(len(paths) for label, paths in data_list)
 print(f'Sounds per Label: {min_sounds_per_label}')
 
