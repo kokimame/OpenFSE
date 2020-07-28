@@ -92,6 +92,6 @@ def evaluate(defaults, save_name, dataset_name):
 
     # calculating the performance metrics
     average_precision(
-        os.path.join(dataset_root, f'ytrue_val_{dataset_name}.pt'),
+        os.path.join(dataset_root, f'{dataset_name}_val_ytrue.pt'),
         -1 * dist_map_matrix.clone() + torch.diag(torch.ones(len(test_data)) * float('-inf')),
     )

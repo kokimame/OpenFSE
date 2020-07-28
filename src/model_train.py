@@ -272,7 +272,7 @@ def train(defaults, save_name, dataset_name):
                                    test_loader=val_mAP_loader).cpu()
 
             mAP, mrr, mr, top1, top10, ones_avg = average_precision(
-                os.path.join(d['dataset_root'], f'ytrue_val_{dataset_name}.pt'),
+                os.path.join(d['dataset_root'], f'{dataset_name}_val_ytrue.pt'),
                 -1 * dist_map_matrix.float().clone() + torch.diag(torch.ones(len(val_data)) * float('-inf')),
                 k=d['mAP@k']
             )
