@@ -20,7 +20,7 @@ class DatasetFixed(Dataset):
         :param w: width of features (number of frames in the temporal dimension)
         :param data_aug: whether to apply data augmentation to each sound (1 or 0)
         """
-        self.data = [d.float() for d in data] # spectrogram features
+        self.data = data
         self.labels = np.array(labels)  # labels of the features
 
         self.seed = 42  # random seed
@@ -37,9 +37,7 @@ class DatasetFixed(Dataset):
 
         # adding some cliques multiple times depending on their size
         for label in self.label_to_indices.keys():
-            if self.label_to_indices[label].size < 2:
-                pass
-            elif self.label_to_indices[label].size < 6:
+            if 0 < self.label_to_indices[label].size < 6:
                 self.clique_list.extend([label] * 1)
             elif self.label_to_indices[label].size < 10:
                 self.clique_list.extend([label] * 2)
@@ -56,6 +54,7 @@ class DatasetFixed(Dataset):
         """
         label = self.clique_list[index]  # getting the clique chosen by the dataloader
 
+        # Configure dataset so that each clique has 4+ instances
         assert self.label_to_indices[label].size > 3
         # selecting 4 sounds from the given clique
         idx1, idx2, idx3, idx4 = np.random.choice(self.label_to_indices[label], 4, replace=False)

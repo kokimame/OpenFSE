@@ -9,7 +9,7 @@ from itertools import permutations
 class MarginAdapter:
 
     def l2norm(self, vector):
-        return vector / np.linalg.norm(vector)
+        return vector / (np.linalg.norm(vector) + np.finfo(float).eps)
 
 
     def __init__(self, label_list, base_margin, description_file=None):

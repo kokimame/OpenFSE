@@ -6,58 +6,67 @@ import torch
 import os
 import glob
 from pathlib import Path
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from tqdm import tqdm
 import csv
 
+USE_TOPK = 100
 TRAIN_SPLIT = 0.8
 CHUNK_WIDTH = 128
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
 DATADIR = f'{ROOTDIR}/spec_200k'
-DATASET_NAME = f'mix_200k'
+DATASET_NAME = f'multi_top{USE_TOPK}'
 
-#### Read tags
+#### Read tags ####
 with open('../data/tags_ppc_top_500.csv', 'r') as f:
     rows = []
     rows.extend(csv.reader(f))
 
 unique_tags = set()
 total_tags = []
+id_tag_lookup = {}
 for row in rows[1:]:
-    total_tags.append(row[1:])
-    unique_tags |= set(row[1:])
+    sound_id, tags = row[0], row[1:]
+    total_tags.extend(tags)
+    id_tag_lookup[sound_id] = tags
+    unique_tags |= set(tags)
 
-#################
+tag_counter = Counter(total_tags)
+print(f'Least common common tags: {tag_counter.most_common()[-1]}')
+###################
 
-paths = glob.glob(os.path.join(DATADIR, '100*.npy'))
+paths = glob.glob(os.path.join(DATADIR, '*.npy'))
 # Looking up paths by the label to which the sound belongs
 path_lookup = {}
+id_category_lookup = {}
 for path in paths:
-    label = Path(path).stem
-    paths = path_lookup.get(label, [])
-    paths.append(path)
-    path_lookup[label] = paths
-path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1])))
+    sound_id, numbering = Path(path).stem.split('_')
+    tags = id_tag_lookup[sound_id]
+    for tag in tags:
+        paths = path_lookup.get(tag, [])
+        paths.append(path)
+        path_lookup[tag] = paths
+path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1]))[:USE_TOPK])
 
 # Setup dataset
 train_data, train_labels = [], []
 val_data, val_labels = [], []
 data_list = list(path_lookup.items())
-min_sounds_per_label = min(len(paths) for label, paths in data_list)
+min_sounds_per_label = 30 #min(len(paths) for label, paths in data_list)
 print(f'Sounds per Label: {min_sounds_per_label}')
 
 with tqdm(total=len(data_list)) as t:
     for label, paths in data_list:
         t.set_description(desc=f'Size (Train: {len(train_data):8d}|Validation: {len(val_data):8d})')
 
-        label, paths = label[:min_sounds_per_label], paths[:min_sounds_per_label]
+        paths = paths[:min_sounds_per_label]
         # Both train and test dataset contain each label at the same ratio
         last_train_index = int(len(paths) * TRAIN_SPLIT)
         for i in range(len(paths)):
             spec = np.load(paths[i])
             if spec.shape[1] != CHUNK_WIDTH:
                 continue
-            tensor = torch.from_numpy(spec).double()
+            tensor = torch.from_numpy(spec)
             if i <= last_train_index:
                 train_data.append(tensor.unsqueeze(0))
                 train_labels.append(label)
