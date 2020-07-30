@@ -18,26 +18,32 @@ def triplet_loss_mining(res_1, labels, embedding_size,
     """
 
     # Creating positive and negative masks for online mining
-    i_labels = []
+    tensor_labels = []
     column_labels = []
     for i, l in enumerate(labels):
         if l in column_labels:
             duplicated_label_index = column_labels.index(l)
-            duplicated_index = i_labels[duplicated_label_index]
+            duplicated_index = tensor_labels[duplicated_label_index]
             i = duplicated_index
-        i_labels += [i] * 4
+        tensor_labels += [i] * 4
         column_labels += [l] * 4
 
-    i_labels = torch.Tensor(i_labels).view(-1, 1)
+    tensor_labels = torch.Tensor(tensor_labels).view(-1, 1)
+    tensor_indices = torch.Tensor(indices)
 
     mask_diag = (1 - torch.eye(res_1.size(0))).long()
     if torch.cuda.is_available():
-        i_labels = i_labels.cuda()
+        tensor_labels = tensor_labels.cuda()
+        tensor_indices = tensor_indices.cuda()
         mask_diag = mask_diag.cuda()
-    temp_mask = (pairwise_distance_matrix(i_labels) < 0.5).long()
 
-    mask_pos = mask_diag * temp_mask
-    mask_neg = mask_diag * (1 - mask_pos)
+    mask_temp = (pairwise_distance_matrix(tensor_labels) < 0.5).long()
+    # Mask items of the same index.
+    # The difference from mask_diag occurs only with multilabel dataset.
+    mask_indices = 1 - (tensor_indices.view(-1, 1) == tensor_indices.view(1, -1)).int()
+
+    mask_pos = mask_diag * mask_temp * mask_indices
+    mask_neg = mask_diag * (1 - mask_pos) * mask_indices
 
     # Getting the pairwise distance matrix
     dist_all = pairwise_distance_matrix(res_1)
@@ -59,10 +65,6 @@ def triplet_loss_mining(res_1, labels, embedding_size,
         margin_list = [[margin] for _ in range(dists_pos.size(0))]
         margin = torch.tensor(margin_list).cuda()
 
-    hard_indices = []
-    if indices is not None:
-        hard_indices = find_hard_indices(dist_all, indices, mask_pos, mask_neg)
-
     margin_satisfied = 0
     # Loss = max(Distance_anc_pos - Distance_anc_neg + Margin, 0)
 
@@ -76,7 +78,7 @@ def triplet_loss_mining(res_1, labels, embedding_size,
 
     margin_satisfied_rate = margin_satisfied / len(dists_pos)
 
-    return loss.mean(), dists_pos.mean(), dists_neg.mean(), margin_satisfied_rate, hard_indices
+    return loss.mean(), dists_pos.mean(), dists_neg.mean(), margin_satisfied_rate
 
 
 def find_hard_indices(dist_all, indices, mask_pos, mask_neg):

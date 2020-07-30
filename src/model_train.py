@@ -48,21 +48,19 @@ def train_triplet_mining(model, optimizer, train_loader, margin,
 
     for batch in tqdm(train_loader, desc='Training the model .....'):  # training loop
         items, item_info = batch
-        labels, indices = [], []
-        for label, indice in item_info:
+        labels, sound_idxs = [], []
+        for label, some_idx in item_info:
             labels.append(label)
-            indices.extend(indice)
+            sound_idxs.extend(some_idx)
         if torch.cuda.is_available():
             items = items.cuda()
         output = model(items)  # obtaining the embeddings of each song in the mini-batch
         # calculating the loss value of the mini-batch
-        loss, pos_avg, neg_avg, msr, hard_indices = triplet_loss_mining(
+        loss, pos_avg, neg_avg, msr = triplet_loss_mining(
             output, labels, model.fin_emb_size,
             margin=margin, mining_strategy=mining_strategy,
-            norm_dist=norm_dist, indices=indices, margin_adapter=margin_adapter
+            norm_dist=norm_dist, indices=sound_idxs, margin_adapter=margin_adapter
         )
-        train_loader.save_hard_indices(hard_indices)
-
         # setting gradients of the optimizer to zero
         optimizer.zero_grad()
 
@@ -105,7 +103,11 @@ def validate_triplet_mining(model, val_loader, margin,
         neg_log = []
 
         for batch_idx, batch in enumerate(val_loader):  # training loop
-            items, labels = batch
+            items, item_info = batch
+            labels, sound_idxs = [], []
+            for label, some_idx in item_info:
+                labels.append(label)
+                sound_idxs.extend(some_idx)
 
             if torch.cuda.is_available():  # sending the pcp features and the labels to cuda if available
                 items = items.cuda()
@@ -113,8 +115,11 @@ def validate_triplet_mining(model, val_loader, margin,
             res_1 = model(items)  # obtaining the embeddings of each song in the mini-batch
 
             # calculating the loss value of the mini-batch
-            loss, pos_avg, neg_avg, msr, _ = triplet_loss_mining(res_1, labels, model.fin_emb_size,
-                                                              margin=margin, mining_strategy=mining_strategy, norm_dist=norm_dist)
+            loss, pos_avg, neg_avg, msr = triplet_loss_mining(res_1, labels, model.fin_emb_size,
+                                                                 margin=margin,
+                                                                 mining_strategy=mining_strategy,
+                                                                 indices=sound_idxs,
+                                                                 norm_dist=norm_dist)
 
             # logging the loss value of the current mini-batch
             loss_log.append(loss.cpu().item())
@@ -180,22 +185,22 @@ def train(defaults, save_name, dataset_name):
         train_path = '{}_1.pt'.format(train_path)
     else:
         train_path = train_path
-    train_data, train_labels = import_dataset_from_pt('{}'.format(train_path), chunks=d['chunks'])
+    train_data, train_labels, train_ids = import_dataset_from_pt('{}'.format(train_path), chunks=d['chunks'])
 
     print(f'Train data has been loaded! Length: {len(train_data)}')
 
-    val_data, val_labels = import_dataset_from_pt('{}'.format(val_path), chunks=1)
+    val_data, val_labels, val_ids = import_dataset_from_pt('{}'.format(val_path), chunks=1)
     print('Validation data has been loaded!')
 
     # Initialize the dataset objects and data loaders
     # we use validation set to track two things, (1) triplet loss, (2) mean average precision
     # to check mean average precision on the full sounds,
     # we need to define another dataset object and data loader for it
-    train_set = DatasetFixed(train_data, train_labels, h=d['input_height'], w=d['input_width'])# , data_aug=d['data_aug'])
+    train_set = DatasetFixed(train_data, train_labels, train_ids, h=d['input_height'], w=d['input_width'])# , data_aug=d['data_aug'])
     train_loader = TrainLoader(train_set, batch_size=d['num_of_labels'], shuffle=True,
                               collate_fn=triplet_mining_collate, drop_last=True)
 
-    val_set = DatasetFixed(val_data, val_labels, h=d['input_height'], w=d['input_width'])#, data_aug=d['data_aug'])
+    val_set = DatasetFixed(val_data, val_labels, val_ids, h=d['input_height'], w=d['input_width'])#, data_aug=d['data_aug'])
     val_loader = DataLoader(val_set, batch_size=d['num_of_labels'], shuffle=True,
                             collate_fn=triplet_mining_collate, drop_last=True)
 

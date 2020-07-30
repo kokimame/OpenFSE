@@ -49,8 +49,8 @@ for path in paths:
 path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1]))[:USE_TOPK])
 
 # Setup dataset
-train_data, train_labels = [], []
-val_data, val_labels = [], []
+train_data, train_labels, train_ids = [], [], []
+val_data, val_labels, val_ids = [], [], []
 data_list = list(path_lookup.items())
 min_sounds_per_label = 30 #min(len(paths) for label, paths in data_list)
 print(f'Sounds per Label: {min_sounds_per_label}')
@@ -63,6 +63,8 @@ with tqdm(total=len(data_list)) as t:
         # Both train and test dataset contain each label at the same ratio
         last_train_index = int(len(paths) * TRAIN_SPLIT)
         for i in range(len(paths)):
+            sound_id, _ =  Path(paths[i]).stem.split('_')
+            sound_id = int(sound_id)
             spec = np.load(paths[i])
             if spec.shape[1] != CHUNK_WIDTH:
                 continue
@@ -70,14 +72,17 @@ with tqdm(total=len(data_list)) as t:
             if i <= last_train_index:
                 train_data.append(tensor.unsqueeze(0))
                 train_labels.append(label)
+                train_ids.append(sound_id)
             else:
                 val_data.append(tensor.unsqueeze(0))
                 val_labels.append(label)
+                val_ids.append(sound_id)
         t.update()
 
 # Create data file based on the datasets
-for run_type, data, labels in [('train', train_data, train_labels), ('val', val_data, val_labels)]:
-    dataset_dict = {'data': data, 'labels': labels}
+for run_type, data, labels, sound_ids in [('train', train_data, train_labels, train_ids),
+                                          ('val', val_data, val_labels, val_ids)]:
+    dataset_dict = {'data': data, 'labels': labels, 'sound_ids': sound_ids}
     postfix = '_1' if run_type == 'train' else ''
     print(f'# of specs in {run_type} dataset: {len(data)}')
     print(f'# of labels in {run_type} dataset: {len(set(labels))}')

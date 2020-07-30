@@ -18,15 +18,18 @@ def import_dataset_from_pt(filename, chunks=1):
             if i == 1:
                 data = dataset_dict['data']
                 labels = dataset_dict['labels']
+                sound_ids = dataset_dict['sound_ids']
             else:
                 data.extend(dataset_dict['data'])
                 labels.extend(dataset_dict['labels'])
+                sound_ids = dataset_dict['sound_ids']
     else:
         dataset_dict = torch.load('{}'.format(filename))
         data = dataset_dict['data']
         labels = dataset_dict['labels']
+        sound_ids = dataset_dict['sound_ids']
 
-    return data, labels
+    return data, labels, sound_ids
 
 
 def cs_augment(pcp, p_pitch=1, p_stretch=0.3, p_warp=0.3):
@@ -170,3 +173,13 @@ def pairwise_distance_matrix(x, y=None, eps=1e-12):
 
     dist = x_norm + y_norm - 2 * torch.mm(x, y.t().contiguous())
     return torch.clamp(dist, eps, np.inf)
+
+def binary_map(x):
+    y = x.view(1, -1)
+    return (x == y).int()
+
+if __name__ == '__main__':
+    x = torch.Tensor([214390., 214374., 214384., 213868., 104598., 436121., 397084., 100416.,
+             435951., 441334., 425405., 425406., 441027., 441014., 442784., 100416.,
+             400324., 416462., 412496., 417317.]).view(-1, 1)
+    print(binary_map(x))

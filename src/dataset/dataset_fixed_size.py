@@ -11,7 +11,7 @@ class DatasetFixed(Dataset):
     Given features are pre-processed to have a same particular shape.
     """
 
-    def __init__(self, data, labels, h=128, w=128, data_aug=1):
+    def __init__(self, data, labels, sound_ids, h=128, w=128, data_aug=1):
         """
         Initialization function for the MOVEDataset object
         :param data: features
@@ -22,6 +22,7 @@ class DatasetFixed(Dataset):
         """
         self.data = data
         self.labels = np.array(labels)  # labels of the features
+        self.sound_ids = np.array(sound_ids)
 
         self.seed = 42  # random seed
         self.h = h  # height of a feature
@@ -57,10 +58,13 @@ class DatasetFixed(Dataset):
         # Configure dataset so that each clique has 4+ instances
         assert self.label_to_indices[label].size > 3
         # selecting 4 sounds from the given clique
+
         idx1, idx2, idx3, idx4 = np.random.choice(self.label_to_indices[label], 4, replace=False)
+
         item1, item2, item3, item4 = self.data[idx1], self.data[idx2], self.data[idx3], self.data[idx4]
-        indices = [idx1, idx2, idx3, idx4]
+        sid1, sid2, sid3, sid4 = self.sound_ids[idx1], self.sound_ids[idx2], self.sound_ids[idx3], self.sound_ids[idx4]
         items_i = [item1, item2, item3, item4]  # list for storing selected sounds
+        sound_ids = [sid1, sid2, sid3, sid4]
 
         items = []
 
@@ -78,7 +82,7 @@ class DatasetFixed(Dataset):
             else:  # if the sound is shorter than the required width, zero-pad the end
                 items.append(torch.cat((item, torch.zeros([1, self.h, self.w - item.shape[2]])), 2))
 
-        return torch.stack(items, 0), (label, indices)
+        return torch.stack(items, 0), (label, sound_ids)
 
     def __len__(self):
         """
