@@ -10,29 +10,30 @@ from collections import OrderedDict, Counter
 from tqdm import tqdm
 import csv
 
-USE_TOPK = 100
 TRAIN_SPLIT = 0.8
 CHUNK_WIDTH = 128
-ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files'
-DATADIR = f'{ROOTDIR}/spec_200k'
-DATASET_NAME = f'multi_top{USE_TOPK}'
+ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50'
+DATADIR = f'{ROOTDIR}/spec'
+DATASET_NAME = f'esc50_all'
 
 #### Read tags ####
-with open('../data/tags_ppc_top_500.csv', 'r') as f:
+with open(f'{ROOTDIR}/meta/esc50.csv', 'r') as f:
     rows = []
-    rows.extend(csv.reader(f))
+    for row in csv.DictReader(f):
+        row['category'] = row['category'].replace('_', ' ')
+        rows.append(row)
 
 unique_tags = set()
 total_tags = []
-id_tag_lookup = {}
-for row in rows[1:]:
-    sound_id, tags = row[0], row[1:]
-    total_tags.extend(tags)
-    id_tag_lookup[sound_id] = tags
-    unique_tags |= set(tags)
+filename_tag_lookup = {}
+for row in rows:
+    tag, filename = row['category'], row['filename'].replace('.wav', '')
+    total_tags.append(tag)
+    filename_tag_lookup[filename] = tag
+    unique_tags |= set(tag)
 
 tag_counter = Counter(total_tags)
-print(f'Least common common tags: {tag_counter.most_common()[-1]}')
+print(f'Least common common tags: {tag_counter.most_common()[:-1]}')
 ###################
 
 paths = glob.glob(os.path.join(DATADIR, '*.npy'))
@@ -40,19 +41,18 @@ paths = glob.glob(os.path.join(DATADIR, '*.npy'))
 path_lookup = {}
 id_category_lookup = {}
 for path in paths:
-    sound_id, numbering = Path(path).stem.split('_')
-    tags = id_tag_lookup[sound_id]
-    for tag in tags:
-        paths = path_lookup.get(tag, [])
-        paths.append(path)
-        path_lookup[tag] = paths
-path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1]))[:USE_TOPK])
+    filename, numbering = Path(path).stem.split('_')
+    tag = filename_tag_lookup[filename]
+    paths = path_lookup.get(tag, [])
+    paths.append(path)
+    path_lookup[tag] = paths
+path_lookup = OrderedDict(sorted(path_lookup.items(), key=lambda x: -len(x[1])))
 
 # Setup dataset
 train_data, train_labels, train_ids = [], [], []
 val_data, val_labels, val_ids = [], [], []
 data_list = list(path_lookup.items())
-min_sounds_per_label = 30 #min(len(paths) for label, paths in data_list)
+min_sounds_per_label = min(len(paths) for label, paths in data_list)
 print(f'Sounds per Label: {min_sounds_per_label}')
 
 with tqdm(total=len(data_list)) as t:
@@ -63,8 +63,7 @@ with tqdm(total=len(data_list)) as t:
         # Both train and test dataset contain each label at the same ratio
         last_train_index = int(len(paths) * TRAIN_SPLIT)
         for i in range(len(paths)):
-            sound_id, _ =  Path(paths[i]).stem.split('_')
-            sound_id = int(sound_id)
+            filename, _ =  Path(paths[i]).stem.split('_')
             spec = np.load(paths[i])
             if spec.shape[1] != CHUNK_WIDTH:
                 continue
@@ -72,11 +71,11 @@ with tqdm(total=len(data_list)) as t:
             if i <= last_train_index:
                 train_data.append(tensor.unsqueeze(0))
                 train_labels.append(label)
-                train_ids.append(sound_id)
+                train_ids.append(filename)
             else:
                 val_data.append(tensor.unsqueeze(0))
                 val_labels.append(label)
-                val_ids.append(sound_id)
+                val_ids.append(filename)
         t.update()
 
 # Create data file based on the datasets

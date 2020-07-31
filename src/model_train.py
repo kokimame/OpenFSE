@@ -162,9 +162,11 @@ def train(defaults, save_name, dataset_name):
         sec = secDot.split('.')[0]
         run_file = f'runs/{mm}-{dd}_{hour}-{minute}-{sec}-{dataset_name}'
         writer = SummaryWriter(run_file)
-        print(f'Save name updated to {save_name}')
-        print(f'Run file updated to {run_file}')
+        print(f'*** USE PRETRAINED MODEL')
+        print(f'*** Save name updated to {save_name}')
+        print(f'*** Run file updated to {run_file}')
     else:
+        print(f'*** TRAIN FROM SCRATCH')
         writer = SummaryWriter(f'runs/{datetime.now().strftime("%m-%d_%H-%M-%S")}-{dataset_name}')
 
 

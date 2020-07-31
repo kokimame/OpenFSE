@@ -33,6 +33,15 @@ class DatasetFixed(Dataset):
 
         # dictionary to store which indexes belong to which label
         self.label_to_indices = {label: np.where(self.labels == label)[0] for label in self.labels_set}
+        not_enough_labels = []
+        for label, indices in self.label_to_indices.items():
+            if indices.size < 4:
+                not_enough_labels.append(label)
+        for label in not_enough_labels:
+            del self.label_to_indices[label]
+            self.labels_set.remove(label)
+        print(f'Label to be used: {len(self.label_to_indices.keys())}')
+
 
         self.clique_list = []  # list to store all cliques
 
@@ -55,10 +64,7 @@ class DatasetFixed(Dataset):
         """
         label = self.clique_list[index]  # getting the clique chosen by the dataloader
 
-        # Configure dataset so that each clique has 4+ instances
-        assert self.label_to_indices[label].size > 3
         # selecting 4 sounds from the given clique
-
         idx1, idx2, idx3, idx4 = np.random.choice(self.label_to_indices[label], 4, replace=False)
 
         item1, item2, item3, item4 = self.data[idx1], self.data[idx2], self.data[idx3], self.data[idx4]
@@ -70,6 +76,7 @@ class DatasetFixed(Dataset):
 
         # pre-processing each sound separately
         for item in items_i:
+
             if self.data_aug == 1:  # applying data augmentation to the sound
                 item = cs_augment(item)
             # if the sound is longer than the required width, choose a random start point to crop
