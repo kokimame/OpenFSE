@@ -42,7 +42,7 @@ for path in tqdm(paths):
     label = Path(Path(path).parent).stem
     filename = Path(path).name
 
-    spec_chunks = generate_spec_v3.spec_to_chunk(path)
+    spec_chunks = generate_spec_v3.spec_to_chunks(path)
     for spec in spec_chunks:
         tensor = torch.from_numpy(spec).double()
         spec = tensor.unsqueeze(0).unsqueeze(0)

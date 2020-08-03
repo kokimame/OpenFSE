@@ -41,4 +41,4 @@ for run_type, data_range in [('train', range(last_train_index)), ('val', range(l
                     sub_ytrue.append(0)
             ytrue.append(sub_ytrue)
         ytrue = torch.Tensor(ytrue)
-        torch.save(ytrue, os.path.join(ROOTDIR, f'ytrue_{run_type}_{DATASET_NAME}.pt'))
+        torch.save(ytrue, os.path.join(ROOTDIR, f'{DATASET_NAME}_{run_type}_ytrue.pt'))

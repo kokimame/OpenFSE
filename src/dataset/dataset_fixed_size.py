@@ -11,7 +11,7 @@ class DatasetFixed(Dataset):
     Given features are pre-processed to have a same particular shape.
     """
 
-    def __init__(self, data, labels, h=128, w=128, data_aug=1):
+    def __init__(self, data, labels, sound_ids, h=128, w=128, data_aug=1):
         """
         Initialization function for the MOVEDataset object
         :param data: features
@@ -20,8 +20,9 @@ class DatasetFixed(Dataset):
         :param w: width of features (number of frames in the temporal dimension)
         :param data_aug: whether to apply data augmentation to each sound (1 or 0)
         """
-        self.data = data  # spectrogram features
+        self.data = data
         self.labels = np.array(labels)  # labels of the features
+        self.sound_ids = np.array(sound_ids)
 
         self.seed = 42  # random seed
         self.h = h  # height of a feature
@@ -32,14 +33,21 @@ class DatasetFixed(Dataset):
 
         # dictionary to store which indexes belong to which label
         self.label_to_indices = {label: np.where(self.labels == label)[0] for label in self.labels_set}
+        not_enough_labels = []
+        for label, indices in self.label_to_indices.items():
+            if indices.size < 4:
+                not_enough_labels.append(label)
+        for label in not_enough_labels:
+            del self.label_to_indices[label]
+            self.labels_set.remove(label)
+        print(f'Label to be used: {len(self.label_to_indices.keys())}')
+
 
         self.clique_list = []  # list to store all cliques
 
         # adding some cliques multiple times depending on their size
         for label in self.label_to_indices.keys():
-            if self.label_to_indices[label].size < 2:
-                pass
-            elif self.label_to_indices[label].size < 6:
+            if 0 < self.label_to_indices[label].size < 6:
                 self.clique_list.extend([label] * 1)
             elif self.label_to_indices[label].size < 10:
                 self.clique_list.extend([label] * 2)
@@ -56,17 +64,19 @@ class DatasetFixed(Dataset):
         """
         label = self.clique_list[index]  # getting the clique chosen by the dataloader
 
-        assert self.label_to_indices[label].size > 3
         # selecting 4 sounds from the given clique
         idx1, idx2, idx3, idx4 = np.random.choice(self.label_to_indices[label], 4, replace=False)
+
         item1, item2, item3, item4 = self.data[idx1], self.data[idx2], self.data[idx3], self.data[idx4]
-        indices = [idx1, idx2, idx3, idx4]
+        sid1, sid2, sid3, sid4 = self.sound_ids[idx1], self.sound_ids[idx2], self.sound_ids[idx3], self.sound_ids[idx4]
         items_i = [item1, item2, item3, item4]  # list for storing selected sounds
+        sound_ids = [sid1, sid2, sid3, sid4]
 
         items = []
 
         # pre-processing each sound separately
         for item in items_i:
+
             if self.data_aug == 1:  # applying data augmentation to the sound
                 item = cs_augment(item)
             # if the sound is longer than the required width, choose a random start point to crop
@@ -77,9 +87,9 @@ class DatasetFixed(Dataset):
                     temp_item = item[:, :, start:start + self.w]
                     items.append(temp_item)
             else:  # if the sound is shorter than the required width, zero-pad the end
-                items.append(torch.cat((item, torch.zeros([1, self.h, self.w - item.shape[2]]).double()), 2))
+                items.append(torch.cat((item, torch.zeros([1, self.h, self.w - item.shape[2]])), 2))
 
-        return torch.stack(items, 0), (label, indices)
+        return torch.stack(items, 0), (label, sound_ids)
 
     def __len__(self):
         """

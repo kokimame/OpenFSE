@@ -31,7 +31,7 @@ def test(model, test_loader, norm_dist=1):
         model.eval()  # setting the model to evaluation mode
 
         # tensor for storing all the embeddings obtained from the test set
-        embed_all = torch.tensor([], device=device, dtype=torch.double)
+        embed_all = torch.tensor([], device=device, dtype=torch.float)
 
         for batch_idx, item in enumerate(tqdm(test_loader, desc='Testing  the model .....')):
 
@@ -42,7 +42,7 @@ def test(model, test_loader, norm_dist=1):
 
             embed_all = torch.cat((embed_all, res_1))  # adding the embedding of the current song to the others
 
-        dist_all = pairwise_distance_matrix(embed_all.cpu())  # calculating the condensed distance matrix
+        dist_all = pairwise_distance_matrix(embed_all)  # calculating the condensed distance matrix
 
         if norm_dist:  # normalizing the distances
             dist_all /= model.fin_emb_size
@@ -92,6 +92,6 @@ def evaluate(defaults, save_name, dataset_name):
 
     # calculating the performance metrics
     average_precision(
-        os.path.join(dataset_root, f'ytrue_val_{dataset_name}.pt'),
+        os.path.join(dataset_root, f'{dataset_name}_val_ytrue.pt'),
         -1 * dist_map_matrix.clone() + torch.diag(torch.ones(len(test_data)) * float('-inf')),
     )

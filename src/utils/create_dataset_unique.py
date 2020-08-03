@@ -96,4 +96,4 @@ for run_type, data, labels in [('train', train_data, train_labels), ('val', val_
                     sub_ytrue.append(0)
             ytrue.append(sub_ytrue)
         ytrue = torch.Tensor(ytrue)
-        torch.save(ytrue, os.path.join(ROOTDIR, f'ytrue_{run_type}_{DATASET_NAME}.pt'))
+        torch.save(ytrue, os.path.join(ROOTDIR, f'{DATASET_NAME}_{run_type}_ytrue.pt'))
