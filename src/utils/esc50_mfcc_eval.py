@@ -13,6 +13,7 @@ from src.utils.utils import import_dataset_from_pt
 from models.model_vgg_dropout import VGGModelDropout
 from sklearn.metrics import accuracy_score
 
+
 class Classifier(nn.Module):
     def __init__(self, input_shape, version=None):
         super(Classifier, self).__init__()
@@ -52,7 +53,6 @@ class Classifier(nn.Module):
         x = F.relu(self.fc1m(x))
         x = F.relu(self.fc3(x))
         return x
-
 
 
 class ESC50Dataset(Dataset):
