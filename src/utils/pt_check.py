@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 
-working_pt = '/media/kokimame/Work_A_1TB/Project/Master_Files/tag_top10_train_1.pt'
-working_ytrue = '/media/kokimame/Work_A_1TB/Project/Master_Files/tag_top10_val_ytrue.pt'
+working_pt = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_l3_train_1.pt'
+working_ytrue = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_l3_val_ytrue.pt'
 # working_pt = '/home/kokimame/Project/Master_Files/benchmark_vgg_1.pt'
 # working_ytrue = '/home/kokimame/Project/Master_Files/benchmark_vgg.pt'
 # failed_pt = '/home/kokimame/Project/Master_Files/benchmark_ta_1.pt'

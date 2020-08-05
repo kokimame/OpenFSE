@@ -1,11 +1,14 @@
+import os
 import json
 import time
+import glob
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+
 from tqdm import tqdm, trange
 from torch.utils.data import Dataset
 from sklearn.cluster import KMeans
@@ -58,13 +61,15 @@ class Classifier(nn.Module):
 
 
 class ESC50Dataset(Dataset):
-    def __init__(self, data, labels, model_path=None):
-        if model_path is not None:
+    def __init__(self, data, labels, model_name=None):
+        if model_name is not None and model_name != 'openl3':
             with open('../data/model_defaults.json') as f:
                 d = json.load(f)
             openfse = VGGModelDropout(emb_size=d['emb_size'])
-            openfse.load_state_dict(torch.load(f'{model_path}'))
+            openfse.load_state_dict(torch.load(f'{model_name}'))
             self.data = openfse(torch.cat(data).unsqueeze(dim=1)).detach()
+        elif model_name == 'openl3':
+            self.data = data
         else:
             self.data = torch.stack([torch.squeeze(d) for d in data])
         labels_list = list(set(labels))
@@ -130,6 +135,7 @@ def discriminative_tasks(classifier_version):
 
     result_lookup = {'loss' : {}, 'acc' : {}}
     for classifier, train_loader, val_loader, setting_name in [
+        (classifier_emb, train_l3_loader, val_l3_loader, 'L3'),  # Baseline
         (classifier_mfcc, train_mfcc_loader, val_mfcc_loader, 'MFCC'),  # Baseline
         (classifier_emb, train_ma_loader, val_ma_loader, 'MA'),         # With margin adapter
         (classifier_emb, train_woma_loader, val_woma_loader, 'WOMA'),   # Without margin adapter
@@ -144,7 +150,7 @@ def discriminative_tasks(classifier_version):
 
     plt.figure(figsize=(20, 4))
     plt.subplot(1, 2, 1)
-    color_lookup = {'MA' : 'C0', 'WOMA' : 'C1', 'MFCC' : 'C2'}
+    color_lookup = {'MA' : 'C0', 'WOMA' : 'C1', 'MFCC' : 'C2', 'L3' : 'C3'}
     for setting_name, (tl, txs, vl, vxs) in result_lookup['loss'].items():
         plt.plot(txs, tl, label=f'{setting_name} - Train', color=color_lookup[setting_name])
         plt.plot(vxs, vl, label=f'{setting_name} - Val', linestyle='-.', color=color_lookup[setting_name])
@@ -171,6 +177,7 @@ def clustering_tasks():
 
     result_lookup = {}
     for train_set, val_set, setting_name in [
+        (train_l3_set, val_l3_set, 'L3'),  # Baseline
         (train_mfcc_set, val_mfcc_set, 'MFCC'),  # Baseline
         (train_ma_set, val_ma_set, 'MA'),         # With margin adapter
         (train_woma_set, val_woma_set, 'WOMA'),   # Without margin adapter
@@ -188,39 +195,58 @@ def clustering_tasks():
 
 EMBEDDING_SHAPE = 512
 MFCC_SHAPE = 120
-NUMBER_OF_EPOCHS = 300
+NUMBER_OF_EPOCHS = 100
 CLASSIFIER_VERSION = 'plain'
 # -------------- Specifying paths and loading datasets ----------------
-MODEL_MA_PATH = '../saved_models/multi_top100_ma_8k.pt'
-MODEL_WOMA_PATH = '../saved_models/multi_top100_woma_8k.pt'
+MODEL_MA_PATH = '../saved_models/model_multi_top500_2020-07-31_10:58:32.673148.pt'
+MODEL_WOMA_PATH = '../saved_models/unique5_12k_semihard_margin2_lr001.pt'
 ESC50_DIR = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50'
 ESC50_SPEC = f'{ESC50_DIR}/spec'
+ESC50_AUDIO = f'{ESC50_DIR}/audio'
+
 
 TRAIN_SPEC_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_train_1.pt'
 VAL_SPEC_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_val.pt'
 TRAIN_MFCC_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_mfcc_train_1.pt'
 VAL_MFCC_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_mfcc_val.pt'
+TRAIN_L3_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_l3_train_1.pt'
+VAL_L3_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_l3_val.pt'
 
 print(' ---------------------------- ')
 print('Start: Loading models and data')
 print(' ---------------------------- \n')
+
+# -- L3
+train_l3_data, train_l3_labels, _ = import_dataset_from_pt('{}'.format(TRAIN_L3_PATH), chunks=1)
+train_l3_set = ESC50Dataset(train_l3_data, train_l3_labels)
+train_l3_loader = torch.utils.data.DataLoader(train_l3_set, batch_size=4, shuffle=True)
+print(f'Train (L3) data has been loaded!\t\t\t | Data Size: {len(train_l3_data)}')
+
+val_l3_data, val_l3_labels, _ = import_dataset_from_pt('{}'.format(VAL_L3_PATH), chunks=1)
+val_l3_set = ESC50Dataset(val_l3_data, val_l3_labels)
+val_l3_loader = torch.utils.data.DataLoader(val_l3_set, batch_size=len(val_l3_set), shuffle=True)
+print(f'Validation (L3) data has been loaded!\t\t | Data Size: {len(val_l3_data)}')
+
+# -- MA
 train_spec_data, train_spec_labels, _ = import_dataset_from_pt('{}'.format(TRAIN_SPEC_PATH), chunks=1)
 val_spec_data, val_spec_labels, _ = import_dataset_from_pt('{}'.format(VAL_SPEC_PATH), chunks=1)
 
-train_ma_set = ESC50Dataset(train_spec_data, train_spec_labels, model_path=MODEL_MA_PATH)
+train_ma_set = ESC50Dataset(train_spec_data, train_spec_labels, model_name=MODEL_MA_PATH)
 train_ma_loader = torch.utils.data.DataLoader(train_ma_set, batch_size=4, shuffle=True)
 print(f'Train (MA) data has been loaded!\t\t\t | Data Size: {len(train_spec_data)}')
-val_ma_set = ESC50Dataset(val_spec_data, val_spec_labels, model_path=MODEL_MA_PATH)
+val_ma_set = ESC50Dataset(val_spec_data, val_spec_labels, model_name=MODEL_MA_PATH)
 val_ma_loader = torch.utils.data.DataLoader(val_ma_set, batch_size=len(val_ma_set), shuffle=True)
 print(f'Validation (MA) data has been loaded!\t\t | Data Size: {len(val_spec_data)}')
 
-train_woma_set = ESC50Dataset(train_spec_data, train_spec_labels, model_path=MODEL_WOMA_PATH)
+# -- WOMA
+train_woma_set = ESC50Dataset(train_spec_data, train_spec_labels, model_name=MODEL_WOMA_PATH)
 train_woma_loader = torch.utils.data.DataLoader(train_woma_set, batch_size=4, shuffle=True)
 print(f'Train (WOMA) data has been loaded!\t\t\t | Data Size: {len(train_spec_data)}')
-val_woma_set = ESC50Dataset(val_spec_data, val_spec_labels, model_path=MODEL_WOMA_PATH)
+val_woma_set = ESC50Dataset(val_spec_data, val_spec_labels, model_name=MODEL_WOMA_PATH)
 val_woma_loader = torch.utils.data.DataLoader(val_woma_set, batch_size=len(val_woma_set), shuffle=True)
 print(f'Validation (WOMA) data has been loaded!\t\t | Data Size: {len(val_spec_data)}')
 
+# -- MFCC
 train_mfcc_data, train_mfcc_labels, _ = import_dataset_from_pt('{}'.format(TRAIN_MFCC_PATH), chunks=1)
 train_mfcc_set = ESC50Dataset(train_mfcc_data, train_mfcc_labels)
 train_mfcc_loader = torch.utils.data.DataLoader(train_mfcc_set, batch_size=4, shuffle=True)
