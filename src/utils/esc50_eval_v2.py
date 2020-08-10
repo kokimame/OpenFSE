@@ -70,10 +70,10 @@ def train(folds):
 def discriminative_tasks():
 
     for folds, setting_name in [
+        (ma_folds, 'MA'),  # With margin adapter
+        (woma_folds, 'WOMA'),  # Without margin adapter
         (l3_folds, 'L3'),  # Baseline
         (mfcc_folds, 'MFCC'),  # Baseline
-        (ma_folds, 'MA'),         # With margin adapter
-        (woma_folds, 'WOMA'),   # Without margin adapter
     ]:
         print(' -------------------------------- ')
         print(f'Start: Training classifier for {setting_name}')
@@ -89,10 +89,10 @@ def clustering_tasks():
 
     result_lookup = {}
     for features, labels, setting_name in [
+        (ma_features, ma_labels, 'MA'),  # With margin adapter
+        (woma_features, woma_labels, 'WOMA'),  # Without margin adapter
         (l3_features, l3_labels, 'L3'),  # Baseline
         (mfcc_features, mfcc_labels, 'MFCC'),  # Baseline
-        (ma_features, ma_labels, 'MA'),         # With margin adapter
-        (woma_features, woma_labels, 'WOMA'),   # Without margin adapter
     ]:
         kmeans = KMeans(n_clusters=50, random_state=0).fit(features)
         ars = adjusted_rand_score(kmeans.labels_, labels)
@@ -108,8 +108,8 @@ def clustering_tasks():
 NUMBER_OF_EPOCHS = 300
 
 # -------------- Specifying paths and loading datasets ----------------
-FSE_MA_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_top100_ma_8k.pt'
-FSE_WOMA_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_top100_woma_8k.pt'
+FSE_MA_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_multi_top500_ma_3.8k.pt'
+FSE_WOMA_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_multi_top500_woma_3k.pt'
 L3_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_l3.pt'
 MFCC_PATH = '/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50/esc50_all_mfcc.pt'
 
@@ -139,5 +139,5 @@ print(f'MFCC data has been loaded!\t\t\t | Data Size: {len(mfcc_features)}')
 print()
 time.sleep(1)
 
+clustering_tasks()
 discriminative_tasks()
-# clustering_tasks()

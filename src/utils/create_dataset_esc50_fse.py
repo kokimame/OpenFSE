@@ -14,8 +14,8 @@ from tqdm import tqdm
 
 TRAIN_SPLIT = 0.8
 CHUNK_WIDTH = 128
-MODEL_TYPE = 'top100_woma_8k'
-MODEL_PATH = '../saved_models/multi_top100_woma_8k.pt'
+MODEL_TYPE = 'multi_top500_woma_3k'
+MODEL_PATH = '../saved_models/model_multi_top500_2020-08-10_01:02:38.414963.pt'
 ROOTDIR = f'/media/kokimame/Work_A_1TB/Project/Master_Files/ESC-50'
 DATADIR = f'{ROOTDIR}/spec'
 DATASET_NAME = f'esc50_all'

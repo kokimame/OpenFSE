@@ -67,6 +67,7 @@ with tqdm(total=len(data_list)) as t:
             label_list.append(label)
             id_list.append(filename)
         t.update()
+mfcc_list = torch.stack(mfcc_list).squeeze()
 
 
 # Create data file based on the datasets
