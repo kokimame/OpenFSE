@@ -74,7 +74,7 @@ protobuf==3.11.2
 psutil==5.6.7
 ptyprocess==0.6.0
 pycparser==2.19
-Pygments==2.5.2
+Pygments==2.7.4
 pyparsing==2.4.5
 PySocks==1.7.1
 PySoundFile==0.9.0.post1
