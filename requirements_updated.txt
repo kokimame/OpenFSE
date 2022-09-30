@@ -39,7 +39,7 @@ ipython==7.10.1
 ipython-genutils==0.2.0
 jedi==0.15.1
 jmespath==0.10.0
-joblib==0.14.1
+joblib==1.2.0
 jupyter-client==5.3.4
 jupyter-core==4.6.1
 kapre==0.1.4
